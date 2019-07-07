@@ -15,8 +15,9 @@ Stable tag: 1.2
 * There is no admin configuration needed. Hook what you need or fork this plugin.
 
 ```
-add_filter('wpfc_fullcalendar_assignment', 'wpfc_fullcalendar_assignment', 10, 0);
-public function wpfc_fullcalendar_assignment()
+// * - cache on F/E
+add_filter('wpfc_fullcalendar_assignment', 'wpfc_fullcalendar_assignment', 10, 1);
+public function wpfc_fullcalendar_assignment($defaultObject)
 {
   $cache_name = 'YOUR_CACHE_NAME';
   // some meta field that records last update time to events, or zero by default

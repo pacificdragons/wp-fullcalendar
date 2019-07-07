@@ -12,7 +12,7 @@ add_option('wpfc_qtips_rounded', get_option('dbem_emfc_qtips_rounded', false));
 add_option('wpfc_qtips_image',1);
 add_option('wpfc_qtips_image_w',75);
 add_option('wpfc_qtips_image_h',75);
-add_option('wpfc_timeFormat', 'h(:mm)t');
+add_option('wpfc_timeFormat', 'h(:mm)A');
 add_option('wpfc_defaultView', 'month');
 add_option('wpfc_available_views', array('month','basicWeek','basicDay'));
 

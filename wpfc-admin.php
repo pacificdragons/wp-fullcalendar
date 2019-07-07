@@ -1,4 +1,5 @@
 <?php
+// not used
 class WPFC_Admin {
 	public static function menus(){
 		$page = add_options_page('WP FullCalendar', 'WP FullCalendar', 'manage_options', 'wp-fullcalendar', array('WPFC_Admin','admin_options'));
@@ -38,7 +39,7 @@ class WPFC_Admin {
 						<div class="handlediv" title="Click to toggle"></div>
 						<h3 class="hndle">About FullCalendar</h3>
 						<div class="inside">
-							<p><a href="http://arshaw.com/fullcalendar/">FullCalendar</a> is a jQuery plugin developed by Adam Shaw, which adds a beautiful AJAX-enabled calendar which can communicate with your blog.</p> 
+							<p><a href="http://arshaw.com/fullcalendar/">FullCalendar</a> is a jQuery plugin developed by Adam Shaw, which adds a beautiful AJAX-enabled calendar which can communicate with your blog.</p>
 							<p>If you find this calendar particularly useful and can spare a few bucks, please <a href="http://arshaw.com/fullcalendar/">donate something to his project</a>, most of the hard work here was done by him and he gives this out freely for everyone to use!</p>
 						</div>
 					</div>
@@ -62,22 +63,23 @@ class WPFC_Admin {
 				<div id="post-body">
 					<div id="post-body-content">
 						<p>
-							<?php echo sprintf(__('To use this plugin, simply use the %s shortcode in one of your posts or pages.','wpfc'),'<code>[fullcalendar]</code>'); ?>
-							<?php echo sprintf(__('You can also do this with PHP and this snippet : %s.','wpfc'),'<code>echo WP_FullCalendar::calendar($args);</code>'); ?>
+							<?php echo sprintf(__('To use this plugin, simply use the %s shortcode in one of your posts or pages.','wp-fullcalendar'),'<code>[fullcalendar]</code>'); ?>
+							<?php echo sprintf(__('You can also do this with PHP and this snippet : %s.','wp-fullcalendar'),'<code>echo WP_FullCalendar::calendar($args);</code>'); ?>
 						</p>
 						<form action="" class="wpfc-options" method="post">
-							<h2 style="margin-top:0px;"><?php _e('Post Types','wpfc'); ?></h2>
-							<p><?php echo sprintf(__('By default, your calendar will show the types of posts based on settings below.','wpfc'),''); ?></p>
+							<?php do_action('wpfc_admin_before_options'); ?>
+							<h2 style="margin-top:0px;"><?php _e('Post Types','wp-fullcalendar'); ?></h2>
+							<p><?php echo sprintf(__('By default, your calendar will show the types of posts based on settings below.','wp-fullcalendar'),''); ?></p>
 							<p>
-								<?php echo sprintf(__('You can override these settings by choosing your post type in your shortode like this %s.','wpfc'),'<code>[fullcalendar type="post"]</code>'); ?>
-								<?php echo sprintf(__('You can override taxonomy search settings as well like this %s.','wpfc'),'<code>[fullcalendar type="post_tag,category"]</code>'); ?>
-								<?php _e('In both cases, the values you should use are in (parenteses) below.','wpfc');?>
+								<?php echo sprintf(__('You can override these settings by choosing your post type in your shortode like this %s.','wp-fullcalendar'),'<code>[fullcalendar type="post"]</code>'); ?>
+								<?php echo sprintf(__('You can override taxonomy search settings as well like this %s.','wp-fullcalendar'),'<code>[fullcalendar type="post_tag,category"]</code>'); ?>
+								<?php _e('In both cases, the values you should use are in (parenteses) below.','wp-fullcalendar');?>
 							</p>
 							<p>
 								<ul class="wpfc-post-types">
-									<?php 
+									<?php
 									$selected_taxonomies = get_option('wpfc_post_taxonomies');
-									foreach( get_post_types( apply_filters('wpfc_get_post_types_args', array('public'=>true ))) as $post_type ){
+									foreach( get_post_types( apply_filters('wpfc_get_post_types_args', array('public'=>true )), 'names') as $post_type ){
 		 								$checked = get_option('wpfc_default_type') == $post_type ? 'checked':'';
 		 								$post_data = get_post_type_object($post_type);
 										echo "<li><label><input type='radio' class='wpfc-post-type' name='wpfc_default_type' value='$post_type' $checked />&nbsp;&nbsp;{$post_data->labels->name} (<em>$post_type</em>)</label>";
@@ -86,7 +88,7 @@ class WPFC_Admin {
 										if( count($post_type_taxonomies) > 0 ){
 											$display = empty($checked) ? 'style="display:none;"':'';
 											echo "<div $display>";
-											echo "<p>".__('Choose which taxonomies you want to see listed as search options on the calendar.','wpfc')."</p>";
+											echo "<p>".__('Choose which taxonomies you want to see listed as search options on the calendar.','wp-fullcalendar')."</p>";
 											echo "<ul>";
 											foreach( $post_type_taxonomies as $taxonomy_name ){
 												$taxonomy = get_taxonomy($taxonomy_name);
@@ -109,13 +111,14 @@ class WPFC_Admin {
 					            	});
 					            });
 				            </script>
-						    <h2><?php _e('Calendar Options','wpfc'); ?></h2>
+							<?php do_action('wpfc_admin_after_cpt_options'); ?>
+						    <h2><?php _e('Calendar Options','wp-fullcalendar'); ?></h2>
 							<table class='form-table'>
-								<?php 
+								<?php
 								$available_views = apply_filters('wpfc_available_views',array('month'=>'Month','basicWeek'=>'Week (basic)','basicDay'=>'Day (basic)','agendaWeek'=>'Week (agenda)','agendaDay'=>'Day (agenda)'));
 								?>
 								<tr>
-									<th scope="row"><?php _e('Available Views','wpfc'); ?></th>
+									<th scope="row"><?php _e('Available Views','wp-fullcalendar'); ?></th>
 									<td>
 										<?php $wpfc_available_views = get_option('wpfc_available_views', array('month','basicWeek','basicDay')); ?>
 										<?php foreach( $available_views as $view_key => $view_value ): ?>
@@ -125,14 +128,15 @@ class WPFC_Admin {
 									</td>
 								</tr>
 								<?php
-								wpfc_options_select( __('Default View','wpfc'), 'wpfc_defaultView', $available_views, __('Choose the default view to be displayed when the calendar is first shown.','wpfc') );
-								wpfc_options_input_text ( __( 'Time Format', 'wpfc' ), 'wpfc_timeFormat', sprintf(__('Set the format used for showing the times on the calendar, <a href="%s">see possible combinations</a>. Leave blank for no time display.','wpfc'),'http://arshaw.com/fullcalendar/docs/utilities/formatDate/'), 'h(:mm)t' );
-								wpfc_options_input_text ( __( 'Events limit', 'wpfc' ), 'wpfc_limit', __('Enter the maximum number of events to show per day, which will then be preceded by a link to the calendar day page.','wpfc') );
-								wpfc_options_input_text ( __( 'View events link', 'wpfc' ), 'wpfc_limit_txt', __('When the limit of events is shown for one day, this text will be used for the link to the calendar day page.','wpfc') );
+								wpfc_options_select( __('Default View','wp-fullcalendar'), 'wpfc_defaultView', $available_views, __('Choose the default view to be displayed when the calendar is first shown.','wp-fullcalendar') );
+								wpfc_options_input_text ( __( 'Time Format', 'wp-fullcalendar'), 'wpfc_timeFormat', sprintf(__('Set the format used for showing the times on the calendar, <a href="%s">see possible combinations</a>. Leave blank for no time display.','wp-fullcalendar'),'http://momentjs.com/docs/#/displaying/format/'), 'h(:mm)a' );
+								wpfc_options_input_text ( __( 'Events limit', 'wp-fullcalendar'), 'wpfc_limit', __('Enter the maximum number of events to show per day, which will then be preceded by a link to the calendar day page.','wp-fullcalendar') );
+								wpfc_options_input_text ( __( 'View events link', 'wp-fullcalendar'), 'wpfc_limit_txt', __('When the limit of events is shown for one day, this text will be used for the link to the calendar day page.','wp-fullcalendar') );
 								?>
 							</table>
-						    <h2><?php _e('jQuery UI Themeroller','wpfc'); ?></h2>
-						    <p><?php echo sprintf(__( 'You can select from a set of pre-made CSS themes, which are taken from the <a href="%s">jQuery Theme Roller</a> gallery. If you roll your own theme, upload the CSS file and images folder to <code>wp-content/yourtheme/plugins/wp-fullcalendar/</code> and refresh this page, it should appear an option in the pull down menu below.','wpfc' ),'http://jqueryui.com/themeroller/'); ?></p>
+							<?php do_action('wpfc_admin_after_calendar_options'); ?>
+						    <h2><?php _e('jQuery UI Themeroller','wp-fullcalendar'); ?></h2>
+						    <p><?php echo sprintf(__( 'You can select from a set of pre-made CSS themes, which are taken from the <a href="%s">jQuery Theme Roller</a> gallery. If you roll your own theme, upload the CSS file and images folder to <code>wp-content/yourtheme/plugins/wp-fullcalendar/</code> and refresh this page, it should appear an option in the pull down menu below.','wp-fullcalendar'),'http://jqueryui.com/themeroller/'); ?></p>
 							<table class='form-table'>
 								<?php
 								//jQuery UI ships with pre-made themes, so here they are. This was coded for packaged CSS Themes 1.10.4 and 1.11.4
@@ -146,67 +150,68 @@ class WPFC_Admin {
 								}
 								?>
 							    <tr class="form-field">
-							        <th scope="row" valign="top"><label for="product_package_unit_price"><?php _e( 'jQuery CSS Theme?', 'wpfc' ); ?></label></th>
+							        <th scope="row" valign="top"><label for="product_package_unit_price"><?php _e( 'jQuery CSS Theme?', 'wp-fullcalendar'); ?></label></th>
 							        <td>
 							            <select name="wpfc_theme_css">
-							            	<option><?php _e( 'No Theme','wpfc' ); ?></option>
-							            	<optgroup label="<?php _e('Built-In','wpfc'); ?>">
+							            	<option value="0"><?php _e( 'No Theme','wp-fullcalendar'); ?></option>
+							            	<optgroup label="<?php _e('Built-In','wp-fullcalendar'); ?>">
 								            	<?php foreach( $jquery_themes as $jquery_theme ): ?>
 								            	<option <?php if(get_option('wpfc_theme_css') == $jquery_theme) echo 'selected="selected"'; ?>><?php echo esc_html($jquery_theme); ?></option>
 								            	<?php endforeach; ?>
 							            	</optgroup>
 							            	<?php if( !empty($css_custom_files) ): ?>
-							            	<optgroup label="<?php _e('Custom','wpfc'); ?>">
+							            	<optgroup label="<?php _e('Custom','wp-fullcalendar'); ?>">
 							            		<?php foreach( $css_custom_files as $css_custom_file ): ?>
 							            			<option <?php if(get_option('wpfc_theme_css') == $css_custom_file) echo 'selected="selected"'; ?>><?php echo esc_html($css_custom_file); ?></option>
 							            		<?php endforeach; ?>
 							            	</optgroup>
 							            	<?php endif; ?>
 							            </select>
-							            <i><?php _e( 'You can use the jQuery UI CSS framework to style the calendar, and choose from a set of themes below.','wpfc' ); ?></i>
+							            <i><?php _e( 'You can use the jQuery UI CSS framework to style the calendar, and choose from a set of themes below.','wp-fullcalendar'); ?></i>
 							        </td>
 							    </tr>
 							</table>
-						    <h2><?php _e('Tooltips','wpfc'); ?></h2>
-						    <p><?php _e( 'You can use <a href="http://craigsworks.com/projects/qtip2/">jQuery qTips</a> to show excerpts of your events within a tooltip when hovering over a specific event on the calendar. You can control the content shown, positioning and style of the tool tips below.','wpfc' ); ?></p>
+							<?php do_action('wpfc_admin_after_themeroller_options'); ?>
+						    <h2><?php _e('Tooltips','wp-fullcalendar'); ?></h2>
+						    <p><?php _e( 'You can use <a href="http://craigsworks.com/projects/qtip2/">jQuery qTips</a> to show excerpts of your events within a tooltip when hovering over a specific event on the calendar. You can control the content shown, positioning and style of the tool tips below.','wp-fullcalendar'); ?></p>
 							<table class='form-table'>
 							    <?php
-								wpfc_options_radio_binary ( __( 'Enable event tooltips?', 'wpfc' ), 'wpfc_qtips', '' );
+								wpfc_options_radio_binary ( __( 'Enable event tooltips?', 'wp-fullcalendar'), 'wpfc_qtips', '' );
 								$tip_styles = array();
 								foreach( WP_FullCalendar::$tip_styles as $tip_style ){
 									$tip_styles[$tip_style] = $tip_style;
 								}
-								wpfc_options_select(__('Tooltip style','wpfc'), 'wpfc_qtips_style', $tip_styles, __('You can choose from one of these preset styles for your tooltip.','wpfc'));
-								wpfc_options_radio_binary ( __( 'Rounded tooltips?', 'wpfc' ), 'wpfc_qtips_rounded', __( 'If your chosen tooltip style doesn\'t already do/prevent this, you can add rounded corners using CSS3.','wpfc' ) );
-								wpfc_options_radio_binary ( __( 'Add shadow to tooltips?', 'wpfc' ), 'wpfc_qtips_shadow', __( 'If your chosen tooltip style doesn\'t already do/prevent this, you can add a CSS3 drop-shadow effect to your tooltip.','wpfc' ) );
+								wpfc_options_select(__('Tooltip style','wp-fullcalendar'), 'wpfc_qtips_style', $tip_styles, __('You can choose from one of these preset styles for your tooltip.','wp-fullcalendar'));
+								wpfc_options_radio_binary ( __( 'Rounded tooltips?', 'wp-fullcalendar'), 'wpfc_qtips_rounded', __( 'If your chosen tooltip style doesn\'t already do/prevent this, you can add rounded corners using CSS3.','wp-fullcalendar') );
+								wpfc_options_radio_binary ( __( 'Add shadow to tooltips?', 'wp-fullcalendar'), 'wpfc_qtips_shadow', __( 'If your chosen tooltip style doesn\'t already do/prevent this, you can add a CSS3 drop-shadow effect to your tooltip.','wp-fullcalendar') );
 								$positions_options = array();
 								foreach( WP_FullCalendar::$tip_positions as $position ){
 									$positions_options[$position] = $position;
 								}
-								wpfc_options_select ( __( 'Tooltip pointer position', 'wpfc' ), 'wpfc_qtips_my', $positions_options, __( 'Choose where the pointer will be situated on your tooltip.','wpfc' ) );
-								wpfc_options_select ( __( 'Tooltip bubble position', 'wpfc' ), 'wpfc_qtips_at', $positions_options, __( 'Choose where your tooltip will be situated relative to the event link which triggers the tooltip.','wpfc' ) );
-								wpfc_options_radio_binary ( __( 'Enable featured image?', 'wpfc' ), 'wpfc_qtips_image', __('If your post has a featured image, it will be included as a thumbnail.','wpfc') );
+								wpfc_options_select ( __( 'Tooltip pointer position', 'wp-fullcalendar'), 'wpfc_qtips_my', $positions_options, __( 'Choose where the pointer will be situated on your tooltip.','wp-fullcalendar') );
+								wpfc_options_select ( __( 'Tooltip bubble position', 'wp-fullcalendar'), 'wpfc_qtips_at', $positions_options, __( 'Choose where your tooltip will be situated relative to the event link which triggers the tooltip.','wp-fullcalendar') );
+								wpfc_options_radio_binary ( __( 'Enable featured image?', 'wp-fullcalendar'), 'wpfc_qtips_image', __('If your post has a featured image, it will be included as a thumbnail.','wp-fullcalendar') );
 							    ?>
 								<tr>
-									<td><label><?php  _e('Featured image size','wpfc'); ?></label></td>
+									<td><label><?php  _e('Featured image size','wp-fullcalendar'); ?></label></td>
 									<td>
-										<?php _e('Width','wpfc'); ?> : <input name="wpfc_qtips_image_w" type="text" style="width:40px;" value="<?php echo get_option('wpfc_qtips_image_w'); ?>" /> 
-										<?php _e('Height','wpfc'); ?> : <input name="wpfc_qtips_image_h" type="text" style="width:40px;" value="<?php echo get_option('wpfc_qtips_image_h'); ?>" />
+										<?php _e('Width','wp-fullcalendar'); ?> : <input name="wpfc_qtips_image_w" type="text" style="width:40px;" value="<?php echo get_option('wpfc_qtips_image_w'); ?>" />
+										<?php _e('Height','wp-fullcalendar'); ?> : <input name="wpfc_qtips_image_h" type="text" style="width:40px;" value="<?php echo get_option('wpfc_qtips_image_h'); ?>" />
 									</td>
 								</tr>
 							</table>
-							
-							
-							<h2><?php _e ( 'JS and CSS Files (Optimization)', 'wpfc' ); ?></h2>
+							<?php do_action('wpfc_admin_after_tooltip_options'); ?>
+
+							<h2><?php _e ( 'JS and CSS Files (Optimization)', 'wp-fullcalendar'); ?></h2>
 				            <table class="form-table">
 								<?php
-								wpfc_options_input_text( __( 'Load JS and CSS files on', 'dbem' ), 'wpfc_scripts_limit', __('Write the page IDs where you will display the FullCalendar on so CSS and JS files are only included on these pages. For multiple pages, use comma-seperated values e.g. 1,2,3. Leaving this blank will load our CSS and JS files on EVERY page, enter -1 for the home page.','wpfc') );
+								wpfc_options_input_text( __( 'Load JS and CSS files on', 'dbem' ), 'wpfc_scripts_limit', __('Write the page IDs where you will display the FullCalendar on so CSS and JS files are only included on these pages. For multiple pages, use comma-seperated values e.g. 1,2,3. Leaving this blank will load our CSS and JS files on EVERY page, enter -1 for the home page.','wp-fullcalendar') );
 								?>
 							</table>
-							
-							
+							<?php do_action('wpfc_admin_after_optimizations'); ?>
+
 							<input type="hidden" name="_wpnonce" value="<?php echo wp_create_nonce('wpfc_options_save'); ?>" />
-							<p class="submit"><input type="submit" value="<?php _e('Submit Changes','wpfc'); ?>" class="button-primary"></p>
+							<p class="submit"><input type="submit" value="<?php _e('Submit Changes','wp-fullcalendar'); ?>" class="button-primary"></p>
 						</form>
 					</div>
 				</div>

@@ -1,17 +1,18 @@
-=== WP FullCalendar ===
+﻿=== WP FullCalendar ===
 Contributors: netweblogic, mikelynn
-Tags: calendar, calendars, jQuery calendar, ajax calendar, event calendars, events calendar
+Tags: calendar, calendars, ~~jQuery calendar~~, ajax calendar, event calendars, events calendar
+Text Domain: wp-fullcalendar
 Requires at least: 3.6
-Tested up to: 4.2.1
-Stable tag: 0.9
+Tested up to: 5.2
+Stable tag: 1.2
 
-Uses the jQuery FullCalendar plugin to create a stunning calendar view of events, posts and other custom post types
+~~Uses the jQuery FullCalendar plugin to create a stunning calendar view of events, posts and other custom post types~~
 
 == Description ==
 
-[FullCalendar](http://arshaw.com/fullcalendar/ "jQuery Calendar Plugin") is a free open source jQuery plugin by Adam Arshaw which generates a stunning calendar populated with your events, posts or any other custom post type.
+[FullCalendar](http://arshaw.com/fullcalendar/ "jQuery Calendar Plugin") is a free open source jQuery plugin by Adam Arshaw which generates a stunning calendar populated with your events.
 
-This plugin combines the power of FullCalendar and WordPress to present your posts in a calendar format, which can be filtered by custom taxonomies such as categories and tags.
+This plugin combines the power of FullCalendar 2.x and WordPress to present your posts or any other custom post type in a calendar format, which can be filtered by custom taxonomies such as categories and tags.
 
 [Demo - See it in action](http://demo.wp-events-plugin.com/calendar/ "Events Manager Calendar Plugin")
 
@@ -19,10 +20,10 @@ This plugin combines the power of FullCalendar and WordPress to present your pos
 
 * AJAX powered
 * Month/Week/Day views
-* Style your calendar with dozens of themes or create your own with the jQuery ThemeRoller
-* Filter by taxonomy, such as category, tag etc.
-* Supports custom post types and custom taxonomies
-* Popout post summaries and thumbnails when you hover over your calendar items using jQuery qTips
+~~* Style your calendar with dozens of themes or create your own with the jQuery ThemeRoller~~
+~~* Filter by taxonomy, such as category, tag etc.~~
+~~* Supports custom post types and custom taxonomies~~
+~~* Popout post summaries and thumbnails when you hover over your calendar items using jQuery qTips~~
 * Integrates seamlessly with [Events Manager](http://wordpress.org/extend/plugins/events-manager/)
 * Various hooks and filters for added flexibility for developers
 
@@ -35,7 +36,6 @@ This plugin combines the power of FullCalendar and WordPress to present your pos
 
 Here's a rough roadmap of where we're heading, and will be ammended as time permits
 
-* Transition to the FullCalendar 2 JS framework
 * Move away from using qTips (or make as an alternative) and use jQuery UI tooltips instead
 * Add more native FullCalendar options to the settings page
 * Add formats for custom post types (currently only possible with Events Manager)
@@ -47,6 +47,38 @@ Here's a rough roadmap of where we're heading, and will be ammended as time perm
 Install this plugin like a normal WordPress plugin. Once activated, you'll see a new panel in the Settings section for editing the options for calendar display.
 
 == Changelog ==
+= 1.2 =
+* updated to FullCalendar 2.6.1 library
+* added wpfc_calendar_displayed action when a calendar has been displayed
+* added wpfc_calendar_header_vars filter which enables overriding FC properties via PHP only
+* fixed double loading of calendars (FC library doesn't support it anyway atm),
+* fixed loading of multiple calendar html showing multiple search filters in one calendar,
+* fixed redundant JS to show the loading spinner
+* updated link to time formatting options which correspond to FC 2.x
+
+= 1.1 =
+* fixed EM 5.6.2 conflict,
+* fixed "undefined 'type'" PHP warning
+* partial fix for arabic not showing events (item times will still show roman numerals)
+* fixed languages with long locales (Chinese Dialects, Portuguese Brazilian) not translating properly
+* updated to FullCalendar library 2.5.0
+
+= 1.0 =
+* switched to FullCalendar 2.x library
+* changed plugin textdomain so it adheres to upcoming wordpress.org plugin translation features
+* moved previously hard-coded translations of calendar out of php code and now included via JS files shipped (and maintained better) via FullCalendar library
+* updated to FullCalendar 2.4.0
+* changed jquery style enqueue ID to jquery-ui so that EM won't override it
+* fixed double-inclusion bug for wpfc-languages.php
+* added some extra actions before WP_Query and also in admin setttings page
+* fixed 'more' link appearing at top rather than bottom
+
+= 0.9.1 =
+* fixed privacy/security vulnerability where post types of any status can be retrieved via AJAX request (Thanks to [François Harvey](http://francoisharvey.ca/) for reporting this responsably)
+* fixed ui-lightness theme stylesheet not being loaded (due to inconsistent file naming in jQuery UI bundle)
+* fixed "No Theme" selection attempting to load non-existent CSS files (requires settings resave)
+* fixed attachment post type tooltip not outputting a thumbnail image
+
 = 0.9 =
 * fixed E_STRICT warning for calling non-static functions
 * moved hard-coded translations out of wp-fullcalendar.php into wpfc-languages.php to prevent encoding issues when editing/committing
@@ -123,7 +155,7 @@ Install this plugin like a normal WordPress plugin. Once activated, you'll see a
 = 0.6 =
 * added taxonomy shortcode attributes
 * added localization
-* year/month shortcode arguments load the initial month shown on calendar 
+* year/month shortcode arguments load the initial month shown on calendar
 
 = 0.1 - 0.5 =
 * first version, ported from Events Manager Fullcalendar 1.4

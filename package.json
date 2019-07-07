@@ -1,0 +1,29 @@
+{
+  "name": "wp-fullcalendar",
+  "version": "1.0.0",
+  "description": "=== WP FullCalendar ===\r Contributors: netweblogic, mikelynn\r Tags: calendar, calendars, jQuery calendar, ajax calendar, event calendars, events calendar\r Text Domain: wp-fullcalendar\r Requires at least: 3.6\r Tested up to: 5.2\r Stable tag: 1.2",
+  "main": "index.js",
+  "scripts": {
+    "dev": "NODE_ENV=development node_modules/webpack/bin/webpack.js --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
+    "watch": "NODE_ENV=development node_modules/webpack/bin/webpack.js --watch --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js",
+    "hot": "NODE_ENV=development webpack-dev-server --inline --hot --config=node_modules/laravel-mix/setup/webpack.config.js",
+    "production": "NODE_ENV=production node_modules/webpack/bin/webpack.js --progress --hide-modules --config=node_modules/laravel-mix/setup/webpack.config.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fullcalendar/bootstrap": "^4.2.0",
+    "@fullcalendar/core": "^4.2.0",
+    "@fullcalendar/daygrid": "^4.2.0",
+    "@fullcalendar/list": "^4.2.0",
+    "@fullcalendar/timegrid": "^4.2.0"
+  },
+  "devDependencies": {
+    "laravel-mix": "^4.0.16",
+    "resolve-url-loader": "2.3.1",
+    "sass": "^1.22.2",
+    "sass-loader": "7.*",
+    "vue-template-compiler": "^2.6.10"
+  }
+}

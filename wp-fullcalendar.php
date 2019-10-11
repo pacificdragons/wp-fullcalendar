@@ -61,7 +61,7 @@ class WP_FullCalendar
   public static function calendar($args = array())
   {
     if (is_array($args)) self::$args = array_merge(self::$args, $args);
-    self::$args['month'] = (!empty($args['month'])) ? $args['month'] - 1 : date('m', current_time('timestamp')) - 1;
+    self::$args['month'] = (!empty($args['month'])) ? $args['month'] : date('m', current_time('timestamp'));
     self::$args['year'] = (!empty($args['year'])) ? $args['year'] : date('Y', current_time('timestamp'));
     self::$args = apply_filters('wpfc_fullcalendar_args', self::$args);
     ob_start();
@@ -83,8 +83,8 @@ class WP_FullCalendar
         }
         echo implode(", ", $strings);
         ?> }
-      WPFC.month = <?php echo self::$args['month']; ?>;
-      WPFC.year = <?php echo self::$args['year']; ?>;
+      WPFC.month = <?= self::$args['month']; ?>;
+      WPFC.year = <?= self::$args['year']; ?>;
     </script>
     <?php
     do_action('wpfc_calendar_displayed', $args);

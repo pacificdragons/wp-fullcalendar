@@ -105,6 +105,23 @@ const calendarEl = document.getElementById('full-calendar')
 // styling hook
 calendarEl.classList.add(`fc-${page.toLowerCase()}`)
 
+const formatDate = (date) => {
+  let d     = new Date(date),
+      month = '' + (d.getMonth() + 1),
+      day   = '' + d.getDate(),
+      year  = d.getFullYear()
+
+  if (month.length < 2) {
+    month = '0' + month
+  }
+
+  if (day.length < 2) {
+    day = '0' + day
+  }
+
+  return [year, month, day].join('-')
+}
+
 const calendar = new Calendar(
   calendarEl,
   {
@@ -114,17 +131,13 @@ const calendar = new Calendar(
     defaultView: LS.getItem(`${nameSpace}_DEFAULT_VIEW`) !== null ? LS.getItem(`${nameSpace}_DEFAULT_VIEW`) : 'listMonth',
     eventLimit: false,
     events ({ start, end }, successCallback, failureCallback) {
-
       const year = start.getFullYear()
       const month = start.getMonth()
-      const firstDay = new Date(year, month, 1)
-      const lastDay = new Date(year, month + 1, 0)
-
       saveEventDataLocally(getAjaxUrl({
           action: data.action,
           type: data.type,
-          start: firstDay.toISOString().slice(0, 10),
-          end: lastDay.toISOString().slice(0, 10),
+          start: formatDate(new Date(year, month + 1, 1)),
+          end: formatDate(new Date(year, month + 2, 0)),
         }),
         nameSpace,
         lastUpdated

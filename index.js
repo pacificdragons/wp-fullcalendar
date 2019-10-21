@@ -5,7 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 
 const { ajaxurl, data, lastUpdated = 0, nameSpace = 'FC', page = 'default' } = window.WPFC
 const LS = localStorage
-
+Object.values = (obj) => Object.keys(obj).map(key => obj[key])
 /**
  * clearLocalStorage
  * Destroys all LS caches based on the prefix

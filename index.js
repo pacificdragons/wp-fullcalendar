@@ -122,22 +122,34 @@ const formatDate = (date) => {
   return [year, month, day].join('-')
 }
 
+const now = new Date()
+const todaysDate = formatDate(now)
+
 const calendar = new Calendar(
   calendarEl,
   {
+    visibleRange: {
+      start: todaysDate,
+      end: formatDate(now.setDate(now.getDate() + 28))
+    },
     datesRender ({ view }) {
       LS.setItem(`${nameSpace}_DEFAULT_VIEW`, view.type)
+    },
+    eventRender ({ el, event, view }) {
+      const now = new Date();
+      if (view.type === 'listMonth') {
+        const isToday = now.setHours(0, 0, 0, 0) === (new Date(event.start)).setHours(0, 0, 0, 0)
+        el.classList[isToday ? 'add' : 'remove']('fc-list-item--today')
+      }
     },
     defaultView: LS.getItem(`${nameSpace}_DEFAULT_VIEW`) !== null ? LS.getItem(`${nameSpace}_DEFAULT_VIEW`) : 'listMonth',
     eventLimit: false,
     events ({ start, end }, successCallback, failureCallback) {
-      const year = start.getFullYear()
-      const month = start.getMonth()
       saveEventDataLocally(getAjaxUrl({
           action: data.action,
           type: data.type,
-          start: formatDate(new Date(year, month + 1, 1)),
-          end: formatDate(new Date(year, month + 2, 0)),
+          start: formatDate(start),
+          end: formatDate(end),
         }),
         nameSpace,
         lastUpdated
@@ -151,11 +163,20 @@ const calendar = new Calendar(
       right: 'prev,next,today',
     },
     height: 'parent',
+    listDayFormat: {
+      weekday: 'long',
+    },
+    listDayAltFormat: {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    },
     loading (state) {
       calendarEl.classList[state ? 'add' : 'remove']('fc--loading')
     },
     plugins: [dayGridPlugin, listPlugin, timeGridPlugin],
     showNonCurrentDates: true,
+    weekNumbers: true,
     timeZone: 'local',
   })
 

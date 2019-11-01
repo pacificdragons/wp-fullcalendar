@@ -42,7 +42,7 @@ class WP_FullCalendar
 
   public static function enqueue_scripts()
   {
-    wp_enqueue_script('wp-fullcalendar', plugins_url('dist/index.js', __FILE__), [], WPFC_VERSION, true);
+    wp_enqueue_script('wp-fullcalendar', plugins_url('dist/index.js?v=1', __FILE__), [], WPFC_VERSION, true);
     wp_enqueue_style('wp-fullcalendar', plugins_url('dist/index.css', __FILE__), [], WPFC_VERSION);
   }
 
@@ -61,8 +61,6 @@ class WP_FullCalendar
   public static function calendar($args = array())
   {
     if (is_array($args)) self::$args = array_merge(self::$args, $args);
-    self::$args['month'] = (!empty($args['month'])) ? $args['month'] : date('m', current_time('timestamp'));
-    self::$args['year'] = (!empty($args['year'])) ? $args['year'] : date('Y', current_time('timestamp'));
     self::$args = apply_filters('wpfc_fullcalendar_args', self::$args);
     ob_start();
     ?>
@@ -70,21 +68,7 @@ class WP_FullCalendar
     <script type="text/javascript">
       var WPFC = <?php echo apply_filters('wpfc_fullcalendar_assignment', '{}')?>;
       WPFC.ajaxurl = '<?php echo admin_url('admin-ajax.php', is_ssl() ? 'https' : 'http') ?>'
-      WPFC.data = {
-        action: 'WP_FullCalendar'<?php
-        //these arguments were assigned earlier on when displaying the calendar, and remain constant between ajax calls
-        if (!empty(self::$args)) {
-          echo ", ";
-        }
-        $strings = array();
-        foreach (self::$args as $key => $arg) {
-          $arg = is_numeric($arg) ? (int)$arg : "'$arg'";
-          $strings[] = "'$key'" . " : " . $arg;
-        }
-        echo implode(", ", $strings);
-        ?> }
-      WPFC.month = <?= self::$args['month']; ?>;
-      WPFC.year = <?= self::$args['year']; ?>;
+      WPFC.data = {  action: 'WP_FullCalendar', 'type' : 'event' }
     </script>
     <?php
     do_action('wpfc_calendar_displayed', $args);

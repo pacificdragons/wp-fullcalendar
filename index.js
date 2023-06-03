@@ -1,6 +1,6 @@
 import { Calendar } from '@fullcalendar/core'
 import dayGridPlugin from '@fullcalendar/daygrid'
-import listPlugin from '@fullcalendar/list'
+import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid'
 
 const { ajaxurl, data, lastUpdated = 0, nameSpace = 'FC', page = 'default' } = window.WPFC
@@ -100,6 +100,17 @@ const getAllLocallySavedEvents = (cb) => {
   }, {})
   return cb(Object.values(allEventsInLocalStorage))
 }
+
+
+const hexToRgb = (hex) => {
+  let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
 const calendarEl = document.getElementById('full-calendar')
 
 // styling hook
@@ -125,25 +136,10 @@ const formatDate = (date) => {
 const now = new Date()
 const todaysDate = formatDate(now)
 
-const calendar = new Calendar(
-  calendarEl,
-  {
-    visibleRange: {
-      start: todaysDate,
-      end: formatDate(now.setDate(now.getDate() + 28))
-    },
-    datesRender ({ view }) {
-      LS.setItem(`${nameSpace}_DEFAULT_VIEW`, view.type)
-    },
-    eventRender ({ el, event, view }) {
-      const now = new Date();
-      if (view.type === 'listMonth') {
-        const isToday = now.setHours(0, 0, 0, 0) === (new Date(event.start)).setHours(0, 0, 0, 0)
-        el.classList[isToday ? 'add' : 'remove']('fc-list-item--today')
-      }
-    },
-    defaultView: LS.getItem(`${nameSpace}_DEFAULT_VIEW`) !== null ? LS.getItem(`${nameSpace}_DEFAULT_VIEW`) : 'listMonth',
-    eventLimit: false,
+document.addEventListener('DOMContentLoaded', function() {
+  const calendarEl = document.getElementById('full-calendar')
+
+  const calendar = new Calendar(calendarEl, {
     events ({ start, end }, successCallback, failureCallback) {
       saveEventDataLocally(getAjaxUrl({
           action: data.action,
@@ -154,31 +150,47 @@ const calendar = new Calendar(
         nameSpace,
         lastUpdated
       ).then(() => getAllLocallySavedEvents(successCallback)).catch(failureCallback)
-
     },
-    firstDay: 1,
-    header: {
-      left: 'dayGridMonth,timeGridWeek,listMonth',
+    headerToolbar: {
       center: 'title',
+      left: 'dayGridMonth,timeGridWeek,listMonth',
       right: 'prev,next,today',
     },
-    height: 'parent',
-    listDayFormat: {
-      weekday: 'long',
-    },
-    listDayAltFormat: {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    },
-    loading (state) {
-      calendarEl.classList[state ? 'add' : 'remove']('fc--loading')
-    },
-    plugins: [dayGridPlugin, listPlugin, timeGridPlugin],
+    initialView: LS.getItem(`${nameSpace}_DEFAULT_VIEW`) !== null
+      ? LS.getItem(`${nameSpace}_DEFAULT_VIEW`)
+      : 'listMonth',
+    nowIndicator: true,
+    firstDay: 1,
+    plugins: [ listPlugin, dayGridPlugin, timeGridPlugin ],
     showNonCurrentDates: true,
+    themeSystem: 'bootstrap',
+    timeZone: 'UTC',
+    visibleRange:   {
+      end: formatDate(now.setDate(now.getDate() + 28)),
+      start: todaysDate,
+    },
     weekNumbers: true,
-    timeZone: 'local',
-  })
+    eventDidMount: (data) => {
+      if (data.backgroundColor) {
+        let color = data.backgroundColor;
+        if (!data.isFuture) {
+          // convert hex to RGB
+          let rgb = hexToRgb(color);
+          // convert RGB to RGBA and change opacity to 50%
+          color = `rgba(${rgb.r},${rgb.g},${rgb.b},0.5)`;
+        }
+        data.el.style.backgroundColor = color;
+      }
+      if (data.textColor) {
+        data.el.style.color = data.textColor
+      }
+      if (data.borderColor) {
+        data.el.style.borderColor = data.borderColor;
+      }
+    }
+  });
 
-calendar.render()
+  calendar.render();
+});
+
 

@@ -9,6 +9,10 @@ Stable tag: 1.2
 ~~Uses the jQuery FullCalendar plugin to create a stunning calendar view of events, posts and other custom post types~~
 
 ==Changes==
+* 31-05-2023 @22:37
+* Upgrades to Full Calendar 6
+
+==Changes==
 * Upgrades to Full Calendar 4
 * No jQuery needed
 * Uses Local Storage to save client side the events ( WP Events Manager can be dog slow ) *

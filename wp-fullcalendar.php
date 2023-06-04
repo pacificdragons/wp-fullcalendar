@@ -22,7 +22,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-define('WPFC_VERSION', '1.2');
+define('WPFC_VERSION', '1.3');
 define('WPFC_UI_VERSION', '1.11');
 
 class WP_FullCalendar
@@ -42,8 +42,9 @@ class WP_FullCalendar
 
   public static function enqueue_scripts()
   {
-    wp_enqueue_script('wp-fullcalendar', plugins_url('dist/index.js?v=1', __FILE__), [], WPFC_VERSION, true);
-    wp_enqueue_style('wp-fullcalendar', plugins_url('dist/index.css', __FILE__), [], WPFC_VERSION);
+    $cb = '?v=' . WPFC_VERSION;
+    wp_enqueue_script('wp-fullcalendar', plugins_url("dist/index.js{$cb}", __FILE__), [], WPFC_VERSION, true);
+    wp_enqueue_style('wp-fullcalendar', plugins_url("dist/index.css{$cb}", __FILE__), [], WPFC_VERSION);
   }
 
   public static function localize_script()

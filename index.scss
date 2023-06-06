@@ -1,5 +1,5 @@
 :root {
-  --fc-today-bg-color: rgb(26 37 47 / 100%);
+  --fc-today-bg-color: rgba(255,220,40,.3)
 }
 
 .fc-daygrid-event-dot {
@@ -8,6 +8,15 @@
 
 .fc-list-event:hover td {
   color: #212529
+}
+
+.fc-event-past .fc-list-event-title {
+  opacity: 0.5;
+}
+
+.fc-event-today {
+  font-weight: bold;
+  background: var(--fc-today-bg-color);
 }
 
 .fc-event-past .fc-event-title {

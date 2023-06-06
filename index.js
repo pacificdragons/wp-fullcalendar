@@ -45,7 +45,7 @@ const saveEventDataLocally = (url, cacheName, _cacheTime) => {
       request.onload = function () {
         if (request.status >= 200 && request.status < 400) {
           LS.setItem(`${nameSpace}/${url}`, request.responseText)
-          resolve()
+          resolve(request.responseText)
         } else {
           reject()
         }
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function() {
     headerToolbar: {
       center: 'title',
       left: 'dayGridMonth,timeGridWeek,listMonth',
-      right: 'prev,next,today',
+      right: 'prev,next',
     },
     initialView: LS.getItem(`${nameSpace}_DEFAULT_VIEW`) !== null
       ? LS.getItem(`${nameSpace}_DEFAULT_VIEW`)
@@ -171,6 +171,9 @@ document.addEventListener('DOMContentLoaded', function() {
     },
     weekNumbers: true,
     eventDidMount: (data) => {
+      if(data.view.type === 'listMonth'){
+        return;
+      }
       if (data.backgroundColor) {
         let color = data.backgroundColor;
         if (!data.isFuture) {

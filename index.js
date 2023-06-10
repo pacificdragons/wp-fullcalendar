@@ -136,6 +136,11 @@ const formatDate = (date) => {
 const now = new Date()
 const todaysDate = formatDate(now)
 
+console.table({
+  now,
+  todaysDate
+})
+
 document.addEventListener('DOMContentLoaded', function() {
   const calendarEl = document.getElementById('full-calendar')
 
@@ -164,7 +169,6 @@ document.addEventListener('DOMContentLoaded', function() {
     plugins: [ listPlugin, dayGridPlugin, timeGridPlugin ],
     showNonCurrentDates: true,
     themeSystem: 'bootstrap',
-    timeZone: 'UTC',
     visibleRange:   {
       end: formatDate(now.setDate(now.getDate() + 28)),
       start: todaysDate,

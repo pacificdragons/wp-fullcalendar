@@ -19,7 +19,7 @@ mix.options({
   },
 });
 
-mix.js('index.js', 'dist/').sass('index.scss', 'dist/')
+mix.js('index.js', 'dist/').css('index.css', 'dist/')
 
 // Full API
 // mix.js(src, output);

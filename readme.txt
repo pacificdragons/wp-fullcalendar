@@ -1,18 +1,18 @@
 ﻿=== WP FullCalendar ===
-Contributors: netweblogic, mikelynn
-Tags: calendar, calendars, ~~jQuery calendar~~, ajax calendar, event calendars, events calendar
+Contributors: pxlite, msykes, mikelynn
+Tags: calendar, calendars, ajax calendar, event calendars, events calendar
 Text Domain: wp-fullcalendar
 Requires at least: 3.6
-Tested up to: 5.2
-Stable tag: 1.2
+Tested up to: 6.5
+Stable tag: 1.5
 
-~~Uses the jQuery FullCalendar plugin to create a stunning calendar view of events, posts and other custom post types~~
+Uses the FullCalendar library to create a stunning calendar view of events, posts and other custom post types
 
 == Description ==
 
 [FullCalendar](http://arshaw.com/fullcalendar/ "jQuery Calendar Plugin") is a free open source jQuery plugin by Adam Arshaw which generates a stunning calendar populated with your events.
 
-This plugin combines the power of FullCalendar 2.x and WordPress to present your posts or any other custom post type in a calendar format, which can be filtered by custom taxonomies such as categories and tags.
+This plugin combines the power of FullCalendar 3.x and WordPress to present your posts or any other custom post type in a calendar format, which can be filtered by custom taxonomies such as categories and tags.
 
 [Demo - See it in action](http://demo.wp-events-plugin.com/calendar/ "Events Manager Calendar Plugin")
 
@@ -20,23 +20,25 @@ This plugin combines the power of FullCalendar 2.x and WordPress to present your
 
 * AJAX powered
 * Month/Week/Day views
-~~* Style your calendar with dozens of themes or create your own with the jQuery ThemeRoller~~
-~~* Filter by taxonomy, such as category, tag etc.~~
-~~* Supports custom post types and custom taxonomies~~
-~~* Popout post summaries and thumbnails when you hover over your calendar items using jQuery qTips~~
+* Style your calendar with dozens of themes or create your own with the jQuery ThemeRoller
+* Filter by taxonomy, such as category, tag etc.
+* Supports custom post types and custom taxonomies
+* Popout/Tooltip post summaries and thumbnails when you hover over your calendar items.
 * Integrates seamlessly with [Events Manager](http://wordpress.org/extend/plugins/events-manager/)
 * Various hooks and filters for added flexibility for developers
 
 = Credits =
 
 * Big thank you to Michael Lynn who generously gave us this plugin namespace after deciding not to go through with his implementation. One less confusing name on the plugin repo!
-* This plugin was originally created for the Events Manager plugin Pro add-on, which has been moved over here so it can be used by the community for other post types.
+* This plugin was originally created for [Events Manager Pro](http://wordpress.org/extend/plugins/events-manager/), which has been moved over here so it can be used by the community for other post types. Support and maintenance is sponsored by proceeds from this premium plugin, so if you're in need of a good Events plugin, give it a try!
 
 = Roadmap =
 
 Here's a rough roadmap of where we're heading, and will be ammended as time permits
 
-* Move away from using qTips (or make as an alternative) and use jQuery UI tooltips instead
+* Move to FullCalendar 5.x library
+* Remove jQuery dependency (due to 5.x transition and select boxes)
+* Add Gutenberg blocks
 * Add more native FullCalendar options to the settings page
 * Add formats for custom post types (currently only possible with Events Manager)
 * Colors for other taxonomies (currently only possible with Events Manager)
@@ -47,6 +49,31 @@ Here's a rough roadmap of where we're heading, and will be ammended as time perm
 Install this plugin like a normal WordPress plugin. Once activated, you'll see a new panel in the Settings section for editing the options for calendar display.
 
 == Changelog ==
+= 1.5 =
+* fixed reported security vulnerability which allows guests to view protected posts without displaying calendar
+* updated PHP code to adhere to WP coding standards
+
+= 1.4.1 =
+* fixed calendar loading issue potentially caused by non-US WordPress core downloads and pre-packaged locales into moment.js
+
+= 1.4 =
+* changed qtip library (outdated and not maintained anymore) to tippy.js
+* fixed minor CSS aesthetics on settings page
+
+= 1.3.1 =
+* fixed qtip CSS issues
+* changed qtip colors from ghastly yellow post-it style to a clean white!
+
+= 1.3 =
+* updated to FullCalendar 3.10.2 (final maintanence of v3, looking at step up to v5)
+* fixed issue where other plugins stripping version number of scripts results in older jQuery UI CSS library being loaded
+* fixed typo in admin description of shortcode
+* updated jQuery UI themes to 1.12.1
+* updated qTip library to latest version 3.x (interim until FC v5 library)
+* added text domain for translation on wordpress.org
+* added JS source includes when in WP_DEBUG
+* updated Danish translation file
+
 = 1.2 =
 * updated to FullCalendar 2.6.1 library
 * added wpfc_calendar_displayed action when a calendar has been displayed
@@ -155,7 +182,7 @@ Install this plugin like a normal WordPress plugin. Once activated, you'll see a
 = 0.6 =
 * added taxonomy shortcode attributes
 * added localization
-* year/month shortcode arguments load the initial month shown on calendar
+* year/month shortcode arguments load the initial month shown on calendar 
 
 = 0.1 - 0.5 =
 * first version, ported from Events Manager Fullcalendar 1.4

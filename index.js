@@ -136,11 +136,6 @@ const formatDate = (date) => {
 const now = new Date()
 const todaysDate = formatDate(now)
 
-console.table({
-  now,
-  todaysDate
-})
-
 document.addEventListener('DOMContentLoaded', function() {
   const calendarEl = document.getElementById('full-calendar')
 
@@ -166,9 +161,9 @@ document.addEventListener('DOMContentLoaded', function() {
       : 'listMonth',
     nowIndicator: true,
     firstDay: 1,
-    plugins: [ listPlugin, dayGridPlugin, timeGridPlugin ],
+    plugins: [ listPlugin, dayGridPlugin, timeGridPlugin  ],
     showNonCurrentDates: true,
-    themeSystem: 'bootstrap',
+    themeSystem: 'bootstrap5',
     visibleRange:   {
       end: formatDate(now.setDate(now.getDate() + 28)),
       start: todaysDate,

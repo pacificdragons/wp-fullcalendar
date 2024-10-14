@@ -22,3 +22,7 @@
 .fc-event-past .fc-event-title {
   font-weight: normal;
 }
+
+.fc .fc-toolbar-title {
+  font-size: clamp(0.75rem, 5vw, 2rem);
+}

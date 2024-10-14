@@ -1,0 +1,306 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WP FullCalendar\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-02-19 19:13+0000\n"
+"PO-Revision-Date: 2020-02-19 19:53+0000\n"
+"Last-Translator: Nils Bacher <niller56@gmail.com>\n"
+"Language-Team: Dansk\n"
+"Language: da_DK\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.3.1; wp-5.3.2"
+
+#: wpfc-admin.php:185
+msgid "Add shadow to tooltips?"
+msgstr "Føj skygge til tooltips?"
+
+#: wpfc-admin.php:120
+msgid "Available Views"
+msgstr "Tilgængelige visninger"
+
+#: wpfc-admin.php:156
+msgid "Built-In"
+msgstr "Indbygget"
+
+#: wpfc-admin.php:71
+msgid ""
+"By default, your calendar will show the types of posts based on settings "
+"below."
+msgstr ""
+"Som standard viser din kalender, hvilke typer indlæg der er baseret på "
+"indstillingerne nedenfor."
+
+#: wpfc-admin.php:114
+msgid "Calendar Options"
+msgstr "Kalenderindstillinger"
+
+#: wpfc-admin.php:130
+msgid ""
+"Choose the default view to be displayed when the calendar is first shown."
+msgstr "Vælg den standardvisning, der skal vises, når kalenderen først vises."
+
+#: wpfc-admin.php:190
+msgid "Choose where the pointer will be situated on your tooltip."
+msgstr "Vælg hvor markøren skal placeres på din værktøjstip."
+
+#: wpfc-admin.php:191
+msgid ""
+"Choose where your tooltip will be situated relative to the event link which "
+"triggers the tooltip."
+msgstr ""
+"Vælg hvor din værktøjstip skal placeres i forhold til event linket, der "
+"udløser værktøjstipen."
+
+#: wpfc-admin.php:90
+msgid ""
+"Choose which taxonomies you want to see listed as search options on the "
+"calendar."
+msgstr ""
+"Vælg hvilke taxonomies du vil se listet som søgemuligheder i kalenderen."
+
+#: wpfc-admin.php:162
+msgid "Custom"
+msgstr "Brugerdefinerede"
+
+#: wpfc-admin.php:130
+msgid "Default View"
+msgstr "Standardvisning"
+
+#: wpfc-admin.php:178
+msgid "Enable event tooltips?"
+msgstr "Aktivér events tip til begivenheder?"
+
+#: wpfc-admin.php:192
+msgid "Enable featured image?"
+msgstr "Vil du aktivere fremhævet billede?"
+
+#: wpfc-admin.php:132
+msgid ""
+"Enter the maximum number of events to show per day, which will then be "
+"preceded by a link to the calendar day page."
+msgstr ""
+"Indtast det maksimale antal begivenheder, der skal vises pr. dag, hvorefter "
+"der efterfølges af et link til siden med kalenderdagen."
+
+#: wpfc-admin.php:132
+msgid "Events limit"
+msgstr "Events begrænsning"
+
+#: wpfc-admin.php:195
+msgid "Featured image size"
+msgstr "Udvalgt billedstørrelse"
+
+#: wpfc-admin.php:198
+msgid "Height"
+msgstr "Højde"
+
+#. Author URI of the plugin
+msgid "http://msyk.es"
+msgstr "http://msyk.es"
+
+#. URI of the plugin
+msgid "http://wordpress.org/extend/plugins/wp-fullcalendar/"
+msgstr "http://wordpress.org/extend/plugins/wp-fullcalendar/"
+
+#: wpfc-admin.php:185
+msgid ""
+"If your chosen tooltip style doesn't already do/prevent this, you can add a "
+"CSS3 drop-shadow effect to your tooltip."
+msgstr ""
+"Hvis dit valgte tooltip stil ikke allerede gør / forhindrer dette, kan du "
+"tilføje en CSS3 drop-shadow-effekt til dit tooltip."
+
+#: wpfc-admin.php:184
+msgid ""
+"If your chosen tooltip style doesn't already do/prevent this, you can add "
+"rounded corners using CSS3."
+msgstr ""
+"Hvis din valgte tooltips ikke allerede gør / forhindrer dette, kan du "
+"tilføje rundede hjørner ved hjælp af CSS3."
+
+#: wpfc-admin.php:192
+msgid "If your post has a featured image, it will be included as a thumbnail."
+msgstr ""
+"Hvis dit indlæg har et vist billede, vil det blive inkluderet som et "
+"miniaturebillede."
+
+#: wpfc-admin.php:75
+msgid "In both cases, the values you should use are in (parenteses) below."
+msgstr "I begge tilfælde er de værdier, du skal bruge, i (parantes) nedenfor."
+
+#: wpfc-admin.php:152
+msgid "jQuery CSS Theme?"
+msgstr "jQuery CSS tema"
+
+#: wpfc-admin.php:137
+msgid "jQuery UI Themeroller"
+msgstr "jQuery UI Themeroller"
+
+#: wpfc-admin.php:204
+msgid "JS and CSS Files (Optimization)"
+msgstr "JS- og CSS-filer (optimering)"
+
+#. Author of the plugin
+msgid "Marcus Sykes"
+msgstr "Marcus Sykes"
+
+#: wpfc-admin.php:155
+msgid "No Theme"
+msgstr "Intet Tema"
+
+#: wpfc-admin.php:70
+msgid "Post Types"
+msgstr "Post type"
+
+#: wpfc-admin.php:184
+msgid "Rounded tooltips?"
+msgstr "Afrundet tool tip?"
+
+#: wpfc-admin.php:131
+#, php-format
+msgid ""
+"Set the format used for showing the times on the calendar, <a href=\"%s\">"
+"see possible combinations</a>. Leave blank for no time display."
+msgstr ""
+"Indstil det format, der bruges til at vise tidspunkterne i kalenderen, <a "
+"href=\"%s\">se mulige kombinationer</a>. Lad det være tomt uden tids visning."
+
+#: wp-fullcalendar.php:330
+msgid "Settings"
+msgstr "Indstillinger"
+
+#: wpfc-admin.php:213
+msgid "Submit Changes"
+msgstr "Send ændringer"
+
+#: wpfc-admin.php:131
+msgid "Time Format"
+msgstr "Tids format"
+
+#: wpfc-admin.php:65
+#, php-format
+msgid ""
+"To use this plugin, simply use the %s shortcode in one of your posts or "
+"pages."
+msgstr ""
+"For at bruge dette plugin skal du blot bruge %s shortcode i et af dine "
+"indlæg eller sider."
+
+#: wpfc-admin.php:191
+msgid "Tooltip bubble position"
+msgstr "Tooltips boble position"
+
+#: wpfc-admin.php:190
+msgid "Tooltip pointer position"
+msgstr "Tooltips markørposition"
+
+#: wpfc-admin.php:183
+msgid "Tooltip style"
+msgstr "Tooltip stil"
+
+#: wpfc-admin.php:174
+msgid "Tooltips"
+msgstr "Tooltips"
+
+#. Description of the plugin
+msgid ""
+"Uses the jQuery FullCalendar plugin to create a stunning calendar view of "
+"events, posts and eventually other CPTs. Integrates well with Events Manager"
+msgstr ""
+"Bruger jQuery FullCalendar-pluginet til at skabe en fantastisk "
+"kalendervisning af begivenheder, indlæg og til sidst andre CPT'er. "
+"Integreres godt med Events Manager"
+
+#: wpfc-admin.php:133
+msgid "View events link"
+msgstr "Se link til begivenheder"
+
+#: wpfc-admin.php:133
+msgid ""
+"When the limit of events is shown for one day, this text will be used for "
+"the link to the calendar day page."
+msgstr ""
+"Når grænsen for begivenheder vises i en dag, bruges denne tekst til linket "
+"til kalenderdagen."
+
+#: wpfc-admin.php:197
+msgid "Width"
+msgstr "Bredde"
+
+#. Name of the plugin
+msgid "WP FullCalendar"
+msgstr "WP FullCalendar"
+
+#: wpfc-admin.php:207
+msgid ""
+"Write the page IDs where you will display the FullCalendar on so CSS and JS "
+"files are only included on these pages. For multiple pages, use comma-"
+"seperated values e.g. 1,2,3. Leaving this blank will load our CSS and JS "
+"files on EVERY page, enter -1 for the home page."
+msgstr ""
+"Skriv side-ID'erne, når du vil se FullCalendar på, så CSS- og JS-filer kun "
+"er inkluderet på disse sider. For flere sider skal du bruge kommaseparerede "
+"værdier, f.eks. 1,2,3. Hvis du forlader dette tomt, indlæses vores CSS- og "
+"JS-filer på HVER side, indtast -1 for startsiden."
+
+#: wpfc-admin.php:66
+#, php-format
+msgid "You can also do this with PHP and this snippet : %s."
+msgstr "Du kan også gøre dette med PHP og denne snippet : %s."
+
+#: wpfc-admin.php:183
+msgid "You can choose from one of these preset styles for your tooltip."
+msgstr "Du kan vælge en af disse forudindstillede preset til din tooltip."
+
+#: wpfc-admin.php:74
+#, php-format
+msgid "You can override taxonomy search settings as well like this %s."
+msgstr "Du kan overskrive taxonomi-søgeindstillinger såvel som denne %s."
+
+#: wpfc-admin.php:73
+#, php-format
+msgid ""
+"You can override these settings by choosing your post type in your shortode "
+"like this %s."
+msgstr ""
+"Du kan overskrive disse indstillinger ved at vælge din posttype i din "
+"shortcode som denne %s."
+
+#: wpfc-admin.php:138
+#, php-format
+msgid ""
+"You can select from a set of pre-made CSS themes, which are taken from the "
+"<a href=\"%s\">jQuery Theme Roller</a> gallery. If you roll your own theme, "
+"upload the CSS file and images folder to <code>wp-"
+"content/yourtheme/plugins/wp-fullcalendar/</code> and refresh this page, it "
+"should appear an option in the pull down menu below."
+msgstr ""
+"Du kan vælge fra et sæt foruddannede CSS-temaer, der er hentet fra <a "
+"href=\"%s\">jQuery Theme Roller</a> gallery.Hvis du ruller dit eget tema, "
+"skal du uploade CSS-filen og -mappen til <code>wp-"
+"content/yourtheme/plugins/wp-fullcalendar/</code> og opdater denne side, den "
+"skal vises som en mulighed i rullemenuen nedenfor."
+
+#: wpfc-admin.php:175
+msgid ""
+"You can use <a href=\"http://craigsworks.com/projects/qtip2/\">jQuery "
+"qTips</a> to show excerpts of your events within a tooltip when hovering "
+"over a specific event on the calendar. You can control the content shown, "
+"positioning and style of the tool tips below."
+msgstr ""
+"Du kan bruge <a href=\"http://craigsworks.com/projects/qtip2/\">jQuery "
+"qTips</a> for at vise uddrag af dine begivenheder inden for en tooltip, når "
+"du holder curseren over en bestemt begivenhed i kalenderen. Du kan "
+"kontrollere det viste indhold, placering og stil på tooltips herunder."
+
+#: wpfc-admin.php:169
+msgid ""
+"You can use the jQuery UI CSS framework to style the calendar, and choose "
+"from a set of themes below."
+msgstr ""
+"Du kan bruge jQuery UI CSS-rammerne til at style kalenderen og vælge fra et "
+"sæt af temaer nedenfor."

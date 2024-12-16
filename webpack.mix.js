@@ -14,10 +14,10 @@ let mix = require('laravel-mix')
 mix.options({
   cssNano: {
     discardComments: {
-      removeAll: true,
-    },
-  },
-});
+      removeAll: true
+    }
+  }
+})
 
 mix.js('index.js', 'dist/').sass('index.scss', 'dist/')
 

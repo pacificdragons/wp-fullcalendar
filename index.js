@@ -1,10 +1,10 @@
 import { Calendar } from '@fullcalendar/core'
 import dayGridPlugin from '@fullcalendar/daygrid'
-import listPlugin from '@fullcalendar/list';
+import listPlugin from '@fullcalendar/list'
 import timeGridPlugin from '@fullcalendar/timegrid'
 
 const { ajaxurl, data, lastUpdated = 0, nameSpace = 'FC', page = 'default' } = window.WPFC
-const LS = localStorage
+const LS = window.localStorage
 Object.values = (obj) => Object.keys(obj).map(key => obj[key])
 /**
  * clearLocalStorage
@@ -30,7 +30,6 @@ const clearLocalStorage = (cachePrefix) => {
  */
 const saveEventDataLocally = (url, cacheName, _cacheTime) => {
   return new Promise((resolve, reject) => {
-
     const cacheTime = Number(_cacheTime)
     const lastCacheTime = Number(LS.getItem(cacheName))
 
@@ -101,14 +100,13 @@ const getAllLocallySavedEvents = (cb) => {
   return cb(Object.values(allEventsInLocalStorage))
 }
 
-
 const hexToRgb = (hex) => {
-  let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
   return result ? {
     r: parseInt(result[1], 16),
     g: parseInt(result[2], 16),
     b: parseInt(result[3], 16)
-  } : null;
+  } : null
 }
 
 const calendarEl = document.getElementById('full-calendar')
@@ -117,10 +115,13 @@ const calendarEl = document.getElementById('full-calendar')
 calendarEl.classList.add(`fc-${page.toLowerCase()}`)
 
 const formatDate = (date) => {
-  let d     = new Date(date),
-      month = '' + (d.getMonth() + 1),
-      day   = '' + d.getDate(),
-      year  = d.getFullYear()
+  let d = new Date(date)
+
+  let month = '' + (d.getMonth() + 1)
+
+  let day = '' + d.getDate()
+
+  let year = d.getFullYear()
 
   if (month.length < 2) {
     month = '0' + month
@@ -136,30 +137,29 @@ const formatDate = (date) => {
 const now = new Date()
 const todaysDate = formatDate(now)
 
-console.table({
-  now,
-  todaysDate
-})
-
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   const calendarEl = document.getElementById('full-calendar')
 
   const calendar = new Calendar(calendarEl, {
+    height: 600,
     events ({ start, end }, successCallback, failureCallback) {
       saveEventDataLocally(getAjaxUrl({
-          action: data.action,
-          type: data.type,
-          start: formatDate(start),
-          end: formatDate(end),
-        }),
-        nameSpace,
-        lastUpdated
+        action: data.action,
+        type: data.type,
+        start: formatDate(start),
+        end: formatDate(end)
+      }),
+      nameSpace,
+      lastUpdated
       ).then(() => getAllLocallySavedEvents(successCallback)).catch(failureCallback)
+    },
+    viewDidMount: (arg) => {
+      LS.setItem(`${nameSpace}_DEFAULT_VIEW`, arg.view.type)
     },
     headerToolbar: {
       center: 'title',
       left: 'dayGridMonth,timeGridWeek,listMonth',
-      right: 'prev,next',
+      right: 'prev,next'
     },
     initialView: LS.getItem(`${nameSpace}_DEFAULT_VIEW`) !== null
       ? LS.getItem(`${nameSpace}_DEFAULT_VIEW`)
@@ -169,35 +169,33 @@ document.addEventListener('DOMContentLoaded', function() {
     plugins: [ listPlugin, dayGridPlugin, timeGridPlugin ],
     showNonCurrentDates: true,
     themeSystem: 'bootstrap',
-    visibleRange:   {
+    visibleRange: {
       end: formatDate(now.setDate(now.getDate() + 28)),
-      start: todaysDate,
+      start: todaysDate
     },
     weekNumbers: true,
     eventDidMount: (data) => {
-      if(data.view.type === 'listMonth'){
-        return;
+      if (data.view.type === 'listMonth') {
+        return
       }
       if (data.backgroundColor) {
-        let color = data.backgroundColor;
+        let color = data.backgroundColor
         if (!data.isFuture) {
           // convert hex to RGB
-          let rgb = hexToRgb(color);
+          let rgb = hexToRgb(color)
           // convert RGB to RGBA and change opacity to 50%
-          color = `rgba(${rgb.r},${rgb.g},${rgb.b},0.5)`;
+          color = `rgba(${rgb.r},${rgb.g},${rgb.b},0.5)`
         }
-        data.el.style.backgroundColor = color;
+        data.el.style.backgroundColor = color
       }
       if (data.textColor) {
         data.el.style.color = data.textColor
       }
       if (data.borderColor) {
-        data.el.style.borderColor = data.borderColor;
+        data.el.style.borderColor = data.borderColor
       }
     }
-  });
+  })
 
-  calendar.render();
-});
-
-
+  calendar.render()
+})

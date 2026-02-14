@@ -4,7 +4,7 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid'
 
-const { ajaxurl, data, lastUpdated = 0, nameSpace = 'FC', page = 'default', canCreateEvents, canEditEvents, createEventNonce } = window.WPFC
+const { ajaxurl, data, page = 'default', canCreateEvents, canEditEvents, createEventNonce } = window.WPFC
 
 // Double-click detection for event creation
 let lastClickTime = 0
@@ -89,65 +89,8 @@ const updateEventDate = (eventId, nonce, newStartDate) => {
       if (!result.success) {
         throw new Error(result.data?.message || 'Failed to update event')
       }
-      clearLocalStorage(nameSpace)
       return result
     })
-}
-
-const LS = localStorage
-Object.values = (obj) => Object.keys(obj).map(key => obj[key])
-/**
- * clearLocalStorage
- * Destroys all LS caches based on the prefix
- * @param cachePrefix:String
- * @return null
- */
-const clearLocalStorage = (cachePrefix) => {
-  Object.keys(LS).forEach(key => {
-    if (key.indexOf(cachePrefix) > -1) {
-      LS.removeItem(key)
-    }
-  })
-}
-
-/**
- * saveEventDataLocally
- * Sets to localStorage the result of a data ajax query.
- * @param url:String
- * @param cacheName:String
- * @param _cacheTime:String
- * @returns {Promise<null>}
- */
-const saveEventDataLocally = (url, cacheName, _cacheTime) => {
-  return new Promise((resolve, reject) => {
-
-    const cacheTime = Number(_cacheTime)
-    const lastCacheTime = Number(LS.getItem(cacheName))
-
-    if (lastCacheTime !== cacheTime) {
-      clearLocalStorage(cacheName)
-      LS.setItem(cacheName, cacheTime)
-    }
-    const eventData = LS.getItem(`${nameSpace}/${url}`)
-    if (!eventData) {
-      const request = new XMLHttpRequest()
-      request.open('GET', url, true)
-      request.onload = function () {
-        if (request.status >= 200 && request.status < 400) {
-          LS.setItem(`${nameSpace}/${url}`, request.responseText)
-          resolve(request.responseText)
-        } else {
-          reject()
-        }
-      }
-      request.onerror = function () {
-        reject()
-      }
-      request.send()
-    } else {
-      resolve()
-    }
-  })
 }
 
 /**
@@ -165,32 +108,6 @@ const dataToKVP = (data) => Object.keys(data).map(key => `${key}=${encodeURIComp
  * @returns {string}
  */
 const getAjaxUrl = (data) => `${ajaxurl}?${dataToKVP(data).join('&')}`
-
-/**
- * getAllLocallySavedEvents
- * iterates over LS events, removing duplicates
- * @param cb:Function
- * @returns cb
- */
-const getAllLocallySavedEvents = (cb) => {
-  const allEventsInLocalStorage = Object.keys(LS).reduce((acc, next) => {
-    if (next.indexOf(`${nameSpace}/`) > -1) {
-      let events = []
-      try {
-        events = JSON.parse(LS[next])
-      } catch (error) {
-        return acc
-      } finally {
-        [...events].forEach((event) => {
-          acc[event.event_id] = event
-        })
-      }
-    }
-    return acc
-  }, {})
-  return cb(Object.values(allEventsInLocalStorage))
-}
-
 
 const hexToRgb = (hex) => {
   let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -265,24 +182,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
   const calendar = new Calendar(calendarEl, {
     events ({ start, end }, successCallback, failureCallback) {
-      saveEventDataLocally(getAjaxUrl({
-          action: data.action,
-          type: data.type,
-          start: formatDate(start),
-          end: formatDate(end),
-        }),
-        nameSpace,
-        lastUpdated
-      ).then(() => getAllLocallySavedEvents(successCallback)).catch(failureCallback)
+      const url = getAjaxUrl({
+        action: data.action,
+        type: data.type,
+        start: formatDate(start),
+        end: formatDate(end),
+      })
+      fetch(url)
+        .then(response => response.json())
+        .then(successCallback)
+        .catch(failureCallback)
     },
     headerToolbar: {
       center: 'title',
       left: 'dayGridMonth,timeGridWeek,listMonth',
       right: 'prev,next',
     },
-    initialView: LS.getItem(`${nameSpace}_DEFAULT_VIEW`) !== null
-      ? LS.getItem(`${nameSpace}_DEFAULT_VIEW`)
-      : 'listMonth',
+    initialView: 'listMonth',
     nowIndicator: true,
     firstDay: 1,
     plugins: [ listPlugin, dayGridPlugin, timeGridPlugin, interactionPlugin ],

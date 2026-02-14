@@ -1,15 +1,22 @@
 {
   "name": "sidouglas/wp-fullcalendar",
-  "version": "1.6.0",
+  "version": "1.7.1",
   "description": "Fork of WP-FullCalendar",
-  "keywords": ["wordpress", "plugin", "acf", "gravity-forms"],
+  "keywords": [
+    "wordpress",
+    "plugin",
+    "acf",
+    "gravity-forms"
+  ],
   "homepage": "https://github.com/sidouglas/wp-fullcalendar.git",
   "license": "MIT",
-  "authors": [{
-    "name": "Simon Douglas",
-    "email": "si@simondouglas.com",
-    "homepage": "http://simondouglas.com"
-  }],
+  "authors": [
+    {
+      "name": "Simon Douglas",
+      "email": "si@simondouglas.com",
+      "homepage": "http://simondouglas.com"
+    }
+  ],
   "type": "wordpress-plugin",
   "require": {
     "composer/installers": "^1.0.6"

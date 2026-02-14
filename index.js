@@ -1,9 +1,52 @@
 import { Calendar } from '@fullcalendar/core'
 import dayGridPlugin from '@fullcalendar/daygrid'
+import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid'
 
-const { ajaxurl, data, lastUpdated = 0, nameSpace = 'FC', page = 'default' } = window.WPFC
+const { ajaxurl, data, lastUpdated = 0, nameSpace = 'FC', page = 'default', canCreateEvents, createEventNonce } = window.WPFC
+
+// Double-click detection for event creation
+let lastClickTime = 0
+let lastClickDate = null
+const DOUBLE_CLICK_DELAY = 300 // ms
+let pendingEventDate = null
+
+// Create confirmation dialog HTML
+const createConfirmDialog = () => {
+  const dialogHtml = `
+    <dialog id="wpfc-create-event-dialog" style="border-radius: 8px; border: 1px solid #ccc; padding: 0; max-width: 320px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0;">
+      <form method="dialog" style="padding: 1.5rem;">
+        <h3 style="margin: 0 0 1rem; font-size: 1.1rem;">Create Event</h3>
+        <p style="margin: 0 0 1.5rem;">Create a new event on <strong id="wpfc-dialog-date"></strong>?</p>
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+          <button type="submit" value="cancel" style="padding: 0.5rem 1rem; cursor: pointer;">Cancel</button>
+          <button type="submit" value="confirm" style="padding: 0.5rem 1rem; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer;">Create Event</button>
+        </div>
+      </form>
+    </dialog>
+  `
+  document.body.insertAdjacentHTML('beforeend', dialogHtml)
+}
+
+// Create event via AJAX
+const createEvent = (date) => {
+  const formData = new FormData()
+  formData.append('action', 'wpfc_create_event')
+  formData.append('nonce', createEventNonce)
+  formData.append('date', date)
+
+  fetch(ajaxurl, {
+    method: 'POST',
+    body: formData
+  })
+    .then(response => response.json())
+    .then(result => {
+      if (result.success && result.data.edit_url) {
+        window.open(result.data.edit_url, '_blank')
+      }
+    })
+}
 const LS = localStorage
 Object.values = (obj) => Object.keys(obj).map(key => obj[key])
 /**
@@ -139,6 +182,18 @@ const todaysDate = formatDate(now)
 document.addEventListener('DOMContentLoaded', function() {
   const calendarEl = document.getElementById('full-calendar')
 
+  // Initialize confirmation dialog if user can create events
+  if (canCreateEvents && createEventNonce) {
+    createConfirmDialog()
+    const dialog = document.getElementById('wpfc-create-event-dialog')
+    dialog.addEventListener('close', function() {
+      if (dialog.returnValue === 'confirm' && pendingEventDate) {
+        createEvent(pendingEventDate)
+      }
+      pendingEventDate = null
+    })
+  }
+
   const calendar = new Calendar(calendarEl, {
     events ({ start, end }, successCallback, failureCallback) {
       saveEventDataLocally(getAjaxUrl({
@@ -161,7 +216,26 @@ document.addEventListener('DOMContentLoaded', function() {
       : 'listMonth',
     nowIndicator: true,
     firstDay: 1,
-    plugins: [ listPlugin, dayGridPlugin, timeGridPlugin  ],
+    plugins: [ listPlugin, dayGridPlugin, timeGridPlugin, interactionPlugin ],
+    dateClick: (info) => {
+      const now = Date.now()
+      if (info.dateStr === lastClickDate && (now - lastClickTime) < DOUBLE_CLICK_DELAY) {
+        // Double-click detected
+        if (canCreateEvents && createEventNonce) {
+          pendingEventDate = info.dateStr
+          const dateDisplay = new Date(info.dateStr).toLocaleDateString(undefined, {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })
+          document.getElementById('wpfc-dialog-date').textContent = dateDisplay
+          document.getElementById('wpfc-create-event-dialog').showModal()
+        }
+      }
+      lastClickTime = now
+      lastClickDate = info.dateStr
+    },
     showNonCurrentDates: true,
     themeSystem: 'bootstrap5',
     visibleRange:   {

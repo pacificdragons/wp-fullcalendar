@@ -39,6 +39,53 @@ class WP_FullCalendar
       add_shortcode('fullcalendar', array('WP_FullCalendar', 'calendar'));
     }
     self::$args['type'] = get_option('wpfc_default_type', 'event');
+
+    // AJAX handler for creating events
+    add_action('wp_ajax_wpfc_create_event', array('WP_FullCalendar', 'ajax_create_event'));
+  }
+
+  /**
+   * AJAX handler to create a new event with a specific date
+   */
+  public static function ajax_create_event()
+  {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'wpfc_create_event')) {
+      wp_send_json_error(array('message' => 'Invalid security token'));
+    }
+
+    // Check capability
+    if (!current_user_can('edit_events')) {
+      wp_send_json_error(array('message' => 'Permission denied'));
+    }
+
+    // Validate date format (YYYY-MM-DD)
+    $date = isset($_POST['date']) ? sanitize_text_field($_POST['date']) : '';
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+      wp_send_json_error(array('message' => 'Invalid date format'));
+    }
+
+    // Create new event using Events Manager
+    if (!class_exists('EM_Event')) {
+      wp_send_json_error(array('message' => 'Events Manager not available'));
+    }
+
+    $event = new EM_Event();
+    $event->event_name = __('New Event', 'wp-fullcalendar');
+    $event->event_start_date = $date;
+    $event->event_end_date = $date;
+    $event->event_start_time = '09:00:00';
+    $event->event_end_time = '17:00:00';
+    $event->event_timezone = get_option('timezone_string', 'UTC');
+    $event->post_content = '';
+    $event->event_status = 0; // Draft status
+
+    if ($event->save()) {
+      $edit_url = admin_url('post.php?post=' . $event->post_id . '&action=edit');
+      wp_send_json_success(array('edit_url' => $edit_url));
+    } else {
+      wp_send_json_error(array('message' => 'Failed to create event'));
+    }
   }
 
   public static function enqueue_scripts()
@@ -71,6 +118,10 @@ class WP_FullCalendar
       var WPFC = <?php echo wp_json_encode(apply_filters('wpfc_fullcalendar_assignment', new stdClass())); ?>;
       WPFC.ajaxurl = <?php echo wp_json_encode(admin_url('admin-ajax.php', is_ssl() ? 'https' : 'http')); ?>;
       WPFC.data = { action: 'WP_FullCalendar', type: 'event' };
+      <?php if (current_user_can('edit_events')): ?>
+      WPFC.canCreateEvents = true;
+      WPFC.createEventNonce = <?php echo wp_json_encode(wp_create_nonce('wpfc_create_event')); ?>;
+      <?php endif; ?>
     </script>
     <?php
     do_action('wpfc_calendar_displayed', $args);

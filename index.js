@@ -158,26 +158,9 @@ document.addEventListener('DOMContentLoaded', function() {
     })
   }
 
-  // Initialize move dialog if user can edit events
+  // Create move dialog element if user can edit events
   if (canEditEvents) {
     createMoveDialog()
-    const moveDialog = document.getElementById('wpfc-move-event-dialog')
-    moveDialog.addEventListener('close', function() {
-      if (moveDialog.returnValue === 'confirm' && pendingMoveEvent) {
-        updateEventDate(
-          pendingMoveEvent.event.extendedProps.event_id,
-          pendingMoveEvent.event.extendedProps.nonce,
-          pendingMoveEvent.event.startStr.substring(0, 10)
-        )
-          .catch((error) => {
-            pendingMoveEvent.revert()
-            alert('Failed to reschedule event: ' + error.message)
-          })
-      } else if (pendingMoveEvent) {
-        pendingMoveEvent.revert()
-      }
-      pendingMoveEvent = null
-    })
   }
 
   const calendar = new Calendar(calendarEl, {
@@ -271,6 +254,32 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   calendar.render();
+
+  // Initialize move dialog handler after calendar is created (so we can refetch)
+  if (canEditEvents) {
+    const moveDialog = document.getElementById('wpfc-move-event-dialog')
+    moveDialog.addEventListener('close', function() {
+      const moveInfo = pendingMoveEvent
+      pendingMoveEvent = null
+
+      if (moveDialog.returnValue === 'confirm' && moveInfo) {
+        updateEventDate(
+          moveInfo.event.extendedProps.event_id,
+          moveInfo.event.extendedProps.nonce,
+          moveInfo.event.startStr.substring(0, 10)
+        )
+          .then(() => {
+            calendar.refetchEvents()
+          })
+          .catch((error) => {
+            moveInfo.revert()
+            alert('Failed to reschedule event: ' + error.message)
+          })
+      } else if (moveInfo) {
+        moveInfo.revert()
+      }
+    })
+  }
 });
 
 

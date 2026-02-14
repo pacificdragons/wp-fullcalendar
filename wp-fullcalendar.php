@@ -179,68 +179,42 @@ class WP_FullCalendar
       wp_send_json_error(array('message' => 'Source event not found'));
     }
 
-    // Calculate day offset between old and new start dates
+    // Use Events Manager's built-in duplicate method
+    $new_event = $source_event->duplicate();
+    if ($new_event === false) {
+      wp_send_json_error(array('message' => 'Failed to clone event'));
+    }
+
+    // Calculate day offset and apply to the duplicated event's dates
     $old_start = new DateTime($source_event->event_start_date);
     $new_start = new DateTime($new_start_date);
     $diff = $old_start->diff($new_start);
 
-    // Calculate new end date by applying same offset
-    $old_end = new DateTime($source_event->event_end_date);
+    $old_end = new DateTime($new_event->event_end_date);
     if ($diff->invert) {
       $old_end->sub(new DateInterval('P' . $diff->days . 'D'));
     } else {
       $old_end->add(new DateInterval('P' . $diff->days . 'D'));
     }
 
-    // Create new event with copied properties
-    $new_event = new EM_Event();
-    $new_event->event_name = $source_event->event_name;
-    $new_event->post_content = $source_event->post_content;
     $new_event->event_start_date = $new_start_date;
     $new_event->event_end_date = $old_end->format('Y-m-d');
-    $new_event->event_start_time = $source_event->event_start_time;
-    $new_event->event_end_time = $source_event->event_end_time;
-    $new_event->event_all_day = $source_event->event_all_day;
-    $new_event->event_timezone = $source_event->event_timezone;
-    $new_event->location_id = $source_event->location_id;
-    $new_event->event_status = $source_event->event_status;
-    $new_event->post_status = $source_event->post_status;
-    $new_event->event_owner = get_current_user_id();
-    $new_event->recurrence = 'single';  // Non-recurring single event
+    $new_event->post_status = 'publish';
+    $new_event->event_status = 1;
 
     if ($new_event->save()) {
-      // EM_Event doesn't save all fields via properties, update directly
-      global $wpdb;
-      $wpdb->update(
-        EM_EVENTS_TABLE,
-        array(
-          'event_archetype' => 'event',
-          'event_type' => 'single',
-          'event_slug' => sanitize_title($new_event->event_name)
-        ),
-        array('event_id' => $new_event->event_id),
-        array('%s', '%s', '%s'),
-        array('%d')
-      );
-
-      // Copy categories from source event
-      $categories = $source_event->get_categories();
-      if ($categories && !empty($categories->terms)) {
-        $category_ids = array();
-        foreach ($categories->terms as $term) {
-          $category_ids[] = $term->term_id;
-        }
-        if (!empty($category_ids)) {
-          wp_set_object_terms($new_event->post_id, $category_ids, EM_TAXONOMY_CATEGORY);
-        }
-      }
+      // Publish the cloned event (EM_Event->save() doesn't update post_status)
+      wp_update_post(array(
+        'ID' => $new_event->post_id,
+        'post_status' => 'publish'
+      ));
 
       wp_send_json_success(array(
         'message' => 'Event cloned',
         'event_id' => $new_event->event_id
       ));
     } else {
-      wp_send_json_error(array('message' => 'Failed to clone event'));
+      wp_send_json_error(array('message' => 'Failed to update cloned event dates'));
     }
   }
 

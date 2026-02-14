@@ -25,10 +25,14 @@ const {
   ajaxurl,
   data,
   page = "default",
+  nameSpace = "WPFC",
   canCreateEvents,
   canEditEvents,
   createEventNonce,
 } = window.WPFC;
+
+/** @type {Storage} Reference to localStorage for view preference persistence */
+const LS = localStorage;
 
 /* ==========================================================================
    State Variables
@@ -274,7 +278,17 @@ document.addEventListener("DOMContentLoaded", function () {
       right: "prev,next",
     },
 
-    initialView: "listMonth",
+    initialView:
+      LS.getItem(`${nameSpace}_DEFAULT_VIEW`) !== null
+        ? LS.getItem(`${nameSpace}_DEFAULT_VIEW`)
+        : "listMonth",
+
+    /**
+     * Saves the user's view preference to localStorage when changed.
+     */
+    datesSet: (info) => {
+      LS.setItem(`${nameSpace}_DEFAULT_VIEW`, info.view.type);
+    },
     nowIndicator: true,
     firstDay: 1,
     plugins: [listPlugin, dayGridPlugin, timeGridPlugin, interactionPlugin],

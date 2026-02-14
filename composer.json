@@ -1,5 +1,6 @@
 {
   "name": "sidouglas/wp-fullcalendar",
+  "version": "1.6.0",
   "description": "Fork of WP-FullCalendar",
   "keywords": ["wordpress", "plugin", "acf", "gravity-forms"],
   "homepage": "https://github.com/sidouglas/wp-fullcalendar.git",

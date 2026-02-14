@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP FullCalendar
-Version: 1.5
+Version: 1.6
 Text Domain: wp-fullcalendar
 Plugin URI: https://wordpress.org/extend/plugins/wp-fullcalendar/
 Description: Uses the jQuery FullCalendar plugin to create a stunning calendar view of events, posts and eventually other CPTs. Integrates well with Events Manager
@@ -10,7 +10,7 @@ Author URI: http://msyk.es
 */
 
 /*
-Copyright (c) 2016, Marcus Sykes
+Copyright (c) 2025, Marcus Sykes
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-define('WPFC_VERSION', '1.3.2');
+define('WPFC_VERSION', '1.6');
 define('WPFC_UI_VERSION', '1.11');
 
 class WP_FullCalendar
@@ -68,9 +68,9 @@ class WP_FullCalendar
     ?>
     <div id="full-calendar"></div>
     <script type="text/javascript">
-      var WPFC = <?php echo apply_filters('wpfc_fullcalendar_assignment', '{}')?>;
-      WPFC.ajaxurl = '<?php echo admin_url('admin-ajax.php', is_ssl() ? 'https' : 'http') ?>'
-      WPFC.data = {  action: 'WP_FullCalendar', 'type' : 'event' }
+      var WPFC = <?php echo wp_json_encode(apply_filters('wpfc_fullcalendar_assignment', new stdClass())); ?>;
+      WPFC.ajaxurl = <?php echo wp_json_encode(admin_url('admin-ajax.php', is_ssl() ? 'https' : 'http')); ?>;
+      WPFC.data = { action: 'WP_FullCalendar', type: 'event' };
     </script>
     <?php
     do_action('wpfc_calendar_displayed', $args);

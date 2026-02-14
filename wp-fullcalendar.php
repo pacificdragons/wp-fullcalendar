@@ -43,6 +43,7 @@ class WP_FullCalendar
     // AJAX handler for creating events
     add_action('wp_ajax_wpfc_create_event', array('WP_FullCalendar', 'ajax_create_event'));
     add_action('wp_ajax_wpfc_update_event', array('WP_FullCalendar', 'ajax_update_event'));
+    add_action('wp_ajax_wpfc_clone_event', array('WP_FullCalendar', 'ajax_clone_event'));
   }
 
   /**
@@ -142,6 +143,107 @@ class WP_FullCalendar
     }
   }
 
+  /**
+   * AJAX handler to clone an event to a new date
+   */
+  public static function ajax_clone_event()
+  {
+    // Verify nonce
+    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'wpfc_clone_event')) {
+      wp_send_json_error(array('message' => 'Invalid security token'));
+    }
+
+    // Check capability
+    if (!current_user_can('edit_events')) {
+      wp_send_json_error(array('message' => 'Permission denied'));
+    }
+
+    $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+    $new_start_date = isset($_POST['new_start_date']) ? sanitize_text_field($_POST['new_start_date']) : '';
+
+    if (!$event_id) {
+      wp_send_json_error(array('message' => 'Invalid event ID'));
+    }
+
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $new_start_date)) {
+      wp_send_json_error(array('message' => 'Invalid date format'));
+    }
+
+    if (!class_exists('EM_Event')) {
+      wp_send_json_error(array('message' => 'Events Manager not available'));
+    }
+
+    // Load source event
+    $source_event = em_get_event($event_id);
+    if (empty($source_event->event_id)) {
+      wp_send_json_error(array('message' => 'Source event not found'));
+    }
+
+    // Calculate day offset between old and new start dates
+    $old_start = new DateTime($source_event->event_start_date);
+    $new_start = new DateTime($new_start_date);
+    $diff = $old_start->diff($new_start);
+
+    // Calculate new end date by applying same offset
+    $old_end = new DateTime($source_event->event_end_date);
+    if ($diff->invert) {
+      $old_end->sub(new DateInterval('P' . $diff->days . 'D'));
+    } else {
+      $old_end->add(new DateInterval('P' . $diff->days . 'D'));
+    }
+
+    // Create new event with copied properties
+    $new_event = new EM_Event();
+    $new_event->event_name = $source_event->event_name;
+    $new_event->post_content = $source_event->post_content;
+    $new_event->event_start_date = $new_start_date;
+    $new_event->event_end_date = $old_end->format('Y-m-d');
+    $new_event->event_start_time = $source_event->event_start_time;
+    $new_event->event_end_time = $source_event->event_end_time;
+    $new_event->event_all_day = $source_event->event_all_day;
+    $new_event->event_timezone = $source_event->event_timezone;
+    $new_event->location_id = $source_event->location_id;
+    $new_event->event_status = $source_event->event_status;
+    $new_event->post_status = $source_event->post_status;
+    $new_event->event_owner = get_current_user_id();
+    $new_event->recurrence = 'single';  // Non-recurring single event
+
+    if ($new_event->save()) {
+      // EM_Event doesn't save all fields via properties, update directly
+      global $wpdb;
+      $wpdb->update(
+        EM_EVENTS_TABLE,
+        array(
+          'event_archetype' => 'event',
+          'event_type' => 'single',
+          'event_slug' => sanitize_title($new_event->event_name)
+        ),
+        array('event_id' => $new_event->event_id),
+        array('%s', '%s', '%s'),
+        array('%d')
+      );
+
+      // Copy categories from source event
+      $categories = $source_event->get_categories();
+      if ($categories && !empty($categories->terms)) {
+        $category_ids = array();
+        foreach ($categories->terms as $term) {
+          $category_ids[] = $term->term_id;
+        }
+        if (!empty($category_ids)) {
+          wp_set_object_terms($new_event->post_id, $category_ids, EM_TAXONOMY_CATEGORY);
+        }
+      }
+
+      wp_send_json_success(array(
+        'message' => 'Event cloned',
+        'event_id' => $new_event->event_id
+      ));
+    } else {
+      wp_send_json_error(array('message' => 'Failed to clone event'));
+    }
+  }
+
   public static function enqueue_scripts()
   {
     $cb = '?v=' . WPFC_VERSION;
@@ -176,6 +278,7 @@ class WP_FullCalendar
       WPFC.canCreateEvents = true;
       WPFC.canEditEvents = true;
       WPFC.createEventNonce = <?php echo wp_json_encode(wp_create_nonce('wpfc_create_event')); ?>;
+      WPFC.cloneEventNonce = <?php echo wp_json_encode(wp_create_nonce('wpfc_clone_event')); ?>;
       <?php endif; ?>
     </script>
     <?php

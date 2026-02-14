@@ -29,6 +29,7 @@ const {
   canCreateEvents,
   canEditEvents,
   createEventNonce,
+  cloneEventNonce,
 } = window.WPFC;
 
 /** @type {Storage} Reference to localStorage for view preference persistence */
@@ -86,14 +87,15 @@ const createMoveDialog = () => {
     <dialog id="wpfc-move-event-dialog" style="border-radius: 8px; border: 1px solid #ccc; padding: 0; max-width: 360px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0;">
       <form method="dialog" style="padding: 1.5rem;">
         <h3 style="margin: 0 0 1rem; font-size: 1.1rem;">Reschedule Event</h3>
-        <p style="margin: 0 0 0.5rem;">Move "<strong id="wpfc-move-event-title"></strong>"</p>
+        <p style="margin: 0 0 0.5rem;">"<strong id="wpfc-move-event-title"></strong>"</p>
         <p style="margin: 0 0 1.5rem; color: #666;">
           From <strong id="wpfc-move-old-date"></strong><br>
-          to <strong id="wpfc-move-new-date"></strong>?
+          to <strong id="wpfc-move-new-date"></strong>
         </p>
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
           <button type="submit" value="cancel" style="padding: 0.5rem 1rem; cursor: pointer;">Cancel</button>
-          <button type="submit" value="confirm" style="padding: 0.5rem 1rem; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer;">Move Event</button>
+          <button type="submit" value="clone" style="padding: 0.5rem 1rem; background: #2271b1; color: white; border: none; border-radius: 4px; cursor: pointer;">Clone</button>
+          <button type="submit" value="move" style="padding: 0.5rem 1rem; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer;">Move</button>
         </div>
       </form>
     </dialog>
@@ -154,6 +156,35 @@ const updateEventDate = (eventId, nonce, newStartDate) => {
     .then((result) => {
       if (!result.success) {
         throw new Error(result.data?.message || "Failed to update event");
+      }
+      return result;
+    });
+};
+
+/**
+ * Clones an event to a new date via WordPress AJAX.
+ * Creates a copy of the source event at the specified target date.
+ *
+ * @param {number} eventId - The source event ID to clone
+ * @param {string} newStartDate - The new start date (YYYY-MM-DD format)
+ * @returns {Promise<Object>} Resolves with the AJAX response on success
+ * @throws {Error} Throws if the clone fails
+ */
+const cloneEvent = (eventId, newStartDate) => {
+  const formData = new FormData();
+  formData.append("action", "wpfc_clone_event");
+  formData.append("event_id", eventId);
+  formData.append("nonce", cloneEventNonce);
+  formData.append("new_start_date", newStartDate);
+
+  return fetch(ajaxurl, {
+    method: "POST",
+    body: formData,
+  })
+    .then((response) => response.json())
+    .then((result) => {
+      if (!result.success) {
+        throw new Error(result.data?.message || "Failed to clone event");
       }
       return result;
     });
@@ -401,7 +432,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const moveInfo = pendingMoveEvent;
       pendingMoveEvent = null;
 
-      if (moveDialog.returnValue === "confirm" && moveInfo) {
+      if (moveDialog.returnValue === "move" && moveInfo) {
         updateEventDate(
           moveInfo.event.extendedProps.event_id,
           moveInfo.event.extendedProps.nonce,
@@ -413,6 +444,19 @@ document.addEventListener("DOMContentLoaded", function () {
           .catch((error) => {
             moveInfo.revert();
             alert("Failed to reschedule event: " + error.message);
+          });
+      } else if (moveDialog.returnValue === "clone" && moveInfo) {
+        // Revert the drag first (clone keeps original in place)
+        moveInfo.revert();
+        cloneEvent(
+          moveInfo.event.extendedProps.event_id,
+          moveInfo.event.startStr.substring(0, 10),
+        )
+          .then(() => {
+            calendar.refetchEvents();
+          })
+          .catch((error) => {
+            alert("Failed to clone event: " + error.message);
           });
       } else if (moveInfo) {
         moveInfo.revert();

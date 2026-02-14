@@ -42,6 +42,7 @@ class WP_FullCalendar
 
     // AJAX handler for creating events
     add_action('wp_ajax_wpfc_create_event', array('WP_FullCalendar', 'ajax_create_event'));
+    add_action('wp_ajax_wpfc_update_event', array('WP_FullCalendar', 'ajax_update_event'));
   }
 
   /**
@@ -88,6 +89,59 @@ class WP_FullCalendar
     }
   }
 
+  /**
+   * AJAX handler to update an event's date (for drag-and-drop rescheduling)
+   */
+  public static function ajax_update_event()
+  {
+    // Verify per-event nonce
+    $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+    $nonce = isset($_POST['nonce']) ? sanitize_text_field($_POST['nonce']) : '';
+
+    if (!$event_id || !wp_verify_nonce($nonce, 'wpfc_event_nonce_' . $event_id)) {
+      wp_send_json_error(array('message' => 'Invalid security token'));
+    }
+
+    if (!current_user_can('edit_events')) {
+      wp_send_json_error(array('message' => 'Permission denied'));
+    }
+
+    $new_start_date = isset($_POST['new_start_date']) ? sanitize_text_field($_POST['new_start_date']) : '';
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $new_start_date)) {
+      wp_send_json_error(array('message' => 'Invalid date format'));
+    }
+
+    if (!function_exists('em_get_event')) {
+      wp_send_json_error(array('message' => 'Events Manager not available'));
+    }
+
+    $event = em_get_event($event_id);
+    if (empty($event->event_id) || !$event->can_manage()) {
+      wp_send_json_error(array('message' => 'Cannot edit this event'));
+    }
+
+    // Calculate day offset and apply to both start and end dates
+    $old_start = new DateTime($event->event_start_date);
+    $new_start = new DateTime($new_start_date);
+    $diff = $old_start->diff($new_start);
+
+    $old_end = new DateTime($event->event_end_date);
+    if ($diff->invert) {
+      $old_end->sub(new DateInterval('P' . $diff->days . 'D'));
+    } else {
+      $old_end->add(new DateInterval('P' . $diff->days . 'D'));
+    }
+
+    $event->event_start_date = $new_start_date;
+    $event->event_end_date = $old_end->format('Y-m-d');
+
+    if ($event->save()) {
+      wp_send_json_success(array('message' => 'Event rescheduled'));
+    } else {
+      wp_send_json_error(array('message' => 'Failed to save event'));
+    }
+  }
+
   public static function enqueue_scripts()
   {
     $cb = '?v=' . WPFC_VERSION;
@@ -120,6 +174,7 @@ class WP_FullCalendar
       WPFC.data = { action: 'WP_FullCalendar', type: 'event' };
       <?php if (current_user_can('edit_events')): ?>
       WPFC.canCreateEvents = true;
+      WPFC.canEditEvents = true;
       WPFC.createEventNonce = <?php echo wp_json_encode(wp_create_nonce('wpfc_create_event')); ?>;
       <?php endif; ?>
     </script>

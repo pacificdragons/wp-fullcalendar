@@ -4,13 +4,16 @@ import interactionPlugin from '@fullcalendar/interaction'
 import listPlugin from '@fullcalendar/list';
 import timeGridPlugin from '@fullcalendar/timegrid'
 
-const { ajaxurl, data, lastUpdated = 0, nameSpace = 'FC', page = 'default', canCreateEvents, createEventNonce } = window.WPFC
+const { ajaxurl, data, lastUpdated = 0, nameSpace = 'FC', page = 'default', canCreateEvents, canEditEvents, createEventNonce } = window.WPFC
 
 // Double-click detection for event creation
 let lastClickTime = 0
 let lastClickDate = null
 const DOUBLE_CLICK_DELAY = 300 // ms
 let pendingEventDate = null
+
+// Drag-and-drop state for event rescheduling
+let pendingMoveEvent = null
 
 // Create confirmation dialog HTML
 const createConfirmDialog = () => {
@@ -22,6 +25,27 @@ const createConfirmDialog = () => {
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
           <button type="submit" value="cancel" style="padding: 0.5rem 1rem; cursor: pointer;">Cancel</button>
           <button type="submit" value="confirm" style="padding: 0.5rem 1rem; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer;">Create Event</button>
+        </div>
+      </form>
+    </dialog>
+  `
+  document.body.insertAdjacentHTML('beforeend', dialogHtml)
+}
+
+// Create move confirmation dialog HTML
+const createMoveDialog = () => {
+  const dialogHtml = `
+    <dialog id="wpfc-move-event-dialog" style="border-radius: 8px; border: 1px solid #ccc; padding: 0; max-width: 360px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0;">
+      <form method="dialog" style="padding: 1.5rem;">
+        <h3 style="margin: 0 0 1rem; font-size: 1.1rem;">Reschedule Event</h3>
+        <p style="margin: 0 0 0.5rem;">Move "<strong id="wpfc-move-event-title"></strong>"</p>
+        <p style="margin: 0 0 1.5rem; color: #666;">
+          From <strong id="wpfc-move-old-date"></strong><br>
+          to <strong id="wpfc-move-new-date"></strong>?
+        </p>
+        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+          <button type="submit" value="cancel" style="padding: 0.5rem 1rem; cursor: pointer;">Cancel</button>
+          <button type="submit" value="confirm" style="padding: 0.5rem 1rem; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer;">Move Event</button>
         </div>
       </form>
     </dialog>
@@ -47,6 +71,29 @@ const createEvent = (date) => {
       }
     })
 }
+
+// Update event date via AJAX (for drag-and-drop rescheduling)
+const updateEventDate = (eventId, nonce, newStartDate) => {
+  const formData = new FormData()
+  formData.append('action', 'wpfc_update_event')
+  formData.append('event_id', eventId)
+  formData.append('nonce', nonce)
+  formData.append('new_start_date', newStartDate)
+
+  return fetch(ajaxurl, {
+    method: 'POST',
+    body: formData
+  })
+    .then(response => response.json())
+    .then(result => {
+      if (!result.success) {
+        throw new Error(result.data?.message || 'Failed to update event')
+      }
+      clearLocalStorage(nameSpace)
+      return result
+    })
+}
+
 const LS = localStorage
 Object.values = (obj) => Object.keys(obj).map(key => obj[key])
 /**
@@ -194,6 +241,28 @@ document.addEventListener('DOMContentLoaded', function() {
     })
   }
 
+  // Initialize move dialog if user can edit events
+  if (canEditEvents) {
+    createMoveDialog()
+    const moveDialog = document.getElementById('wpfc-move-event-dialog')
+    moveDialog.addEventListener('close', function() {
+      if (moveDialog.returnValue === 'confirm' && pendingMoveEvent) {
+        updateEventDate(
+          pendingMoveEvent.event.extendedProps.event_id,
+          pendingMoveEvent.event.extendedProps.nonce,
+          pendingMoveEvent.event.startStr.substring(0, 10)
+        )
+          .catch((error) => {
+            pendingMoveEvent.revert()
+            alert('Failed to reschedule event: ' + error.message)
+          })
+      } else if (pendingMoveEvent) {
+        pendingMoveEvent.revert()
+      }
+      pendingMoveEvent = null
+    })
+  }
+
   const calendar = new Calendar(calendarEl, {
     events ({ start, end }, successCallback, failureCallback) {
       saveEventDataLocally(getAjaxUrl({
@@ -217,6 +286,25 @@ document.addEventListener('DOMContentLoaded', function() {
     nowIndicator: true,
     firstDay: 1,
     plugins: [ listPlugin, dayGridPlugin, timeGridPlugin, interactionPlugin ],
+    editable: !!canEditEvents,
+    eventDurationEditable: false,
+    eventDrop: (info) => {
+      if (!canEditEvents || !info.event.extendedProps?.event_id) {
+        info.revert()
+        return
+      }
+
+      pendingMoveEvent = info
+
+      const formatDateDisplay = (dateStr) => new Date(dateStr).toLocaleDateString(undefined, {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      })
+
+      document.getElementById('wpfc-move-event-title').textContent = info.event.title
+      document.getElementById('wpfc-move-old-date').textContent = formatDateDisplay(info.oldEvent.startStr)
+      document.getElementById('wpfc-move-new-date').textContent = formatDateDisplay(info.event.startStr)
+      document.getElementById('wpfc-move-event-dialog').showModal()
+    },
     dateClick: (info) => {
       const now = Date.now()
       if (info.dateStr === lastClickDate && (now - lastClickTime) < DOUBLE_CLICK_DELAY) {

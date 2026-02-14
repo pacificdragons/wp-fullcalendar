@@ -116,8 +116,8 @@ class WP_FullCalendar
     }
 
     $event = em_get_event($event_id);
-    if (empty($event->event_id) || !$event->can_manage()) {
-      wp_send_json_error(array('message' => 'Cannot edit this event'));
+    if (empty($event->event_id)) {
+      wp_send_json_error(array('message' => 'Event not found'));
     }
 
     // Calculate day offset and apply to both start and end dates

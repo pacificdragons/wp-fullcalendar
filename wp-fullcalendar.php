@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP FullCalendar
-Version: 1.6
+Version: 1.8.0
 Text Domain: wp-fullcalendar
 Plugin URI: https://wordpress.org/extend/plugins/wp-fullcalendar/
 Description: Uses the jQuery FullCalendar plugin to create a stunning calendar view of events, posts and eventually other CPTs. Integrates well with Events Manager
@@ -23,7 +23,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-define('WPFC_VERSION', '1.6');
+define('WPFC_VERSION', '1.8.0');
 define('WPFC_UI_VERSION', '1.11');
 
 class WP_FullCalendar
@@ -34,7 +34,6 @@ class WP_FullCalendar
   {
     //Scripts
     if (!is_admin()) { //show only in public area
-      add_action('wp_enqueue_scripts', array('WP_FullCalendar', 'enqueue_scripts'));
       //shortcodes
       add_shortcode('fullcalendar', array('WP_FullCalendar', 'calendar'));
     }
@@ -218,20 +217,6 @@ class WP_FullCalendar
     }
   }
 
-  public static function enqueue_scripts()
-  {
-    $cb = '?v=' . WPFC_VERSION;
-    wp_enqueue_script('wp-fullcalendar', plugins_url("dist/index.js{$cb}", __FILE__), [], WPFC_VERSION, true);
-    wp_enqueue_style('wp-fullcalendar', plugins_url("dist/index.css{$cb}", __FILE__), [], WPFC_VERSION);
-  }
-
-  public static function localize_script()
-  {
-    $js_vars = array();
-    $js_vars['ajaxurl'] = admin_url('admin-ajax.php', is_ssl() ? 'https' : 'http');
-    wp_localize_script('wp-fullcalendar', 'WPFC', apply_filters('wpfc_js_vars', $js_vars));
-  }
-
   /**
    * Returns the calendar HTML setup and primes the js to load at wp_footer
    * @param array $args
@@ -241,6 +226,12 @@ class WP_FullCalendar
   {
     if (is_array($args)) self::$args = array_merge(self::$args, $args);
     self::$args = apply_filters('wpfc_fullcalendar_args', self::$args);
+
+    // Enqueue scripts only when shortcode is actually used
+    $cb = '?v=' . WPFC_VERSION;
+    wp_enqueue_script('wp-fullcalendar', plugins_url("dist/index.js{$cb}", __FILE__), [], WPFC_VERSION, true);
+    wp_enqueue_style('wp-fullcalendar', plugins_url("dist/index.css{$cb}", __FILE__), [], WPFC_VERSION);
+
     ob_start();
     ?>
     <div id="full-calendar"></div>

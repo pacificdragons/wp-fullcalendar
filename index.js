@@ -29,6 +29,7 @@ const {
   canCreateEvents,
   canEditEvents,
   createEventNonce,
+  updateEventNonce,
   cloneEventNonce,
 } = window.WPFC;
 
@@ -69,8 +70,8 @@ const createConfirmDialog = () => {
         <h3 style="margin: 0 0 1rem; font-size: 1.1rem;">Create Event</h3>
         <p style="margin: 0 0 1.5rem;">Create a new event on <strong id="wpfc-dialog-date"></strong>?</p>
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-          <button type="submit" value="cancel" style="padding: 0.5rem 1rem; cursor: pointer;">Cancel</button>
-          <button type="submit" value="confirm" style="padding: 0.5rem 1rem; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer;">Create Event</button>
+          <button type="submit" value="cancel" class="btn">Cancel</button>
+          <button type="submit" value="confirm" class="btn btn-primary">Create Event</button>
         </div>
       </form>
     </dialog>
@@ -93,9 +94,9 @@ const createMoveDialog = () => {
           to <strong id="wpfc-move-new-date"></strong>
         </p>
         <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
-          <button type="submit" value="cancel" style="padding: 0.5rem 1rem; cursor: pointer;">Cancel</button>
-          <button type="submit" value="clone" style="padding: 0.5rem 1rem; background: #2271b1; color: white; border: none; border-radius: 4px; cursor: pointer;">Clone</button>
-          <button type="submit" value="move" style="padding: 0.5rem 1rem; background: #0073aa; color: white; border: none; border-radius: 4px; cursor: pointer;">Move</button>
+          <button type="submit" value="cancel" class="btn">Cancel</button>
+          <button type="submit" value="clone" class="btn btn-primary">Clone</button>
+          <button type="submit" value="move" class="btn btn-primary">Move</button>
         </div>
       </form>
     </dialog>
@@ -136,16 +137,15 @@ const createEvent = (date) => {
  * The backend calculates the day offset and applies it to both start and end dates.
  *
  * @param {number} eventId - The event ID to update
- * @param {string} nonce - Security nonce for this specific event
  * @param {string} newStartDate - The new start date (YYYY-MM-DD format)
  * @returns {Promise<Object>} Resolves with the AJAX response on success
  * @throws {Error} Throws if the update fails
  */
-const updateEventDate = (eventId, nonce, newStartDate) => {
+const updateEventDate = (eventId, newStartDate) => {
   const formData = new FormData();
   formData.append("action", "wpfc_update_event");
   formData.append("event_id", eventId);
-  formData.append("nonce", nonce);
+  formData.append("nonce", updateEventNonce);
   formData.append("new_start_date", newStartDate);
 
   return fetch(ajaxurl, {
@@ -331,9 +331,31 @@ document.addEventListener("DOMContentLoaded", function () {
     /**
      * Handles event drag-and-drop to reschedule.
      * Shows confirmation dialog before saving.
+     * Past events can only be cloned, not moved.
+     * Events cannot be cloned to a past date.
      */
     eventDrop: (info) => {
       if (!canEditEvents || !info.event.extendedProps?.event_id) {
+        info.revert();
+        return;
+      }
+
+      // Check if original event and target date are in the past
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const eventStart = new Date(info.oldEvent.start);
+      eventStart.setHours(0, 0, 0, 0);
+      const targetDate = new Date(info.event.start);
+      targetDate.setHours(0, 0, 0, 0);
+      const isPastEvent = eventStart < today;
+      const isTargetInPast = targetDate < today;
+
+      // If no valid action available, silently revert
+      // Move: source must not be in past AND target must not be in past
+      // Clone: target must not be in past
+      const canMove = !isPastEvent && !isTargetInPast;
+      const canClone = !isTargetInPast;
+      if (!canMove && !canClone) {
         info.revert();
         return;
       }
@@ -348,6 +370,18 @@ document.addEventListener("DOMContentLoaded", function () {
           day: "numeric",
         });
 
+      // Past events cannot be moved, only cloned
+      const moveButton = document.querySelector(
+        '#wpfc-move-event-dialog button[value="move"]',
+      );
+      moveButton.style.display = canMove ? "" : "none";
+
+      // Cannot clone to a past date
+      const cloneButton = document.querySelector(
+        '#wpfc-move-event-dialog button[value="clone"]',
+      );
+      cloneButton.style.display = canClone ? "" : "none";
+
       document.getElementById("wpfc-move-event-title").textContent =
         info.event.title;
       document.getElementById("wpfc-move-old-date").textContent =
@@ -359,6 +393,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     /**
      * Handles date clicks for double-click event creation.
+     * Double-clicking on past dates does nothing.
      */
     dateClick: (info) => {
       const now = Date.now();
@@ -366,8 +401,16 @@ document.addEventListener("DOMContentLoaded", function () {
         info.dateStr === lastClickDate &&
         now - lastClickTime < DOUBLE_CLICK_DELAY
       ) {
-        // Double-click detected - show create dialog
+        // Double-click detected - show create dialog (only for future dates)
         if (canCreateEvents && createEventNonce) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          const clickedDate = new Date(info.dateStr);
+          clickedDate.setHours(0, 0, 0, 0);
+          if (clickedDate < today) {
+            return;
+          }
+
           pendingEventDate = info.dateStr;
           const dateDisplay = new Date(info.dateStr).toLocaleDateString(
             undefined,
@@ -435,7 +478,6 @@ document.addEventListener("DOMContentLoaded", function () {
       if (moveDialog.returnValue === "move" && moveInfo) {
         updateEventDate(
           moveInfo.event.extendedProps.event_id,
-          moveInfo.event.extendedProps.nonce,
           moveInfo.event.startStr.substring(0, 10),
         )
           .then(() => {

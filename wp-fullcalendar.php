@@ -95,11 +95,11 @@ class WP_FullCalendar
    */
   public static function ajax_update_event()
   {
-    // Verify per-event nonce
+    // Verify nonce
     $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
     $nonce = isset($_POST['nonce']) ? sanitize_text_field($_POST['nonce']) : '';
 
-    if (!$event_id || !wp_verify_nonce($nonce, 'wpfc_event_nonce_' . $event_id)) {
+    if (!$event_id || !wp_verify_nonce($nonce, 'wpfc_update_event')) {
       wp_send_json_error(array('message' => 'Invalid security token'));
     }
 
@@ -252,6 +252,7 @@ class WP_FullCalendar
       WPFC.canCreateEvents = true;
       WPFC.canEditEvents = true;
       WPFC.createEventNonce = <?php echo wp_json_encode(wp_create_nonce('wpfc_create_event')); ?>;
+      WPFC.updateEventNonce = <?php echo wp_json_encode(wp_create_nonce('wpfc_update_event')); ?>;
       WPFC.cloneEventNonce = <?php echo wp_json_encode(wp_create_nonce('wpfc_clone_event')); ?>;
       <?php endif; ?>
     </script>

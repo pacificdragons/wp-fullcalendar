@@ -26,6 +26,7 @@ const {
   data,
   page = "default",
   nameSpace = "WPFC",
+  lastUpdated = 0,
   canCreateEvents,
   canEditEvents,
   createEventNonce,
@@ -211,6 +212,79 @@ const dataToKVP = (data) =>
  */
 const getAjaxUrl = (data) => `${ajaxurl}?${dataToKVP(data).join("&")}`;
 
+/* ==========================================================================
+   Event-feed Cache (localStorage read-through)
+   ==========================================================================
+   Caches the event JSON per month range in localStorage so navigating the
+   calendar doesn't re-hit admin-ajax every time. The cache is busted two ways:
+     1. Cross-request: `lastUpdated` (the server's FC_CACHE option) is bumped
+        whenever any event is saved/cancelled; a changed value wipes the cache
+        on the next page load.
+     2. Same-session: after a front-end move/clone the cache is cleared
+        explicitly before refetch, because `lastUpdated` in memory is stale
+        until the page reloads.
+   The cache is per-browser, so per-user event visibility stays correct.
+   ========================================================================== */
+
+/** @type {string} Prefix for cached event-feed entries (keyed by request URL). */
+const CACHE_PREFIX = `${nameSpace}/evt/`;
+
+/** @type {string} Key holding the lastUpdated value the cache was primed with. */
+const CACHE_TIME_KEY = `${nameSpace}/evt-time`;
+
+/**
+ * Removes all cached event-feed entries. Leaves the view-preference key
+ * (`${nameSpace}_DEFAULT_VIEW`) untouched — it doesn't share this prefix.
+ */
+const clearEventCache = () => {
+  Object.keys(LS).forEach((key) => {
+    if (key.indexOf(CACHE_PREFIX) === 0) {
+      LS.removeItem(key);
+    }
+  });
+};
+
+/**
+ * Fetches the event feed for a URL, reading through localStorage. Returns
+ * parsed events from cache when fresh, otherwise fetches and caches them.
+ *
+ * @param {string} url - The admin-ajax event-feed URL
+ * @returns {Promise<Object[]>} Resolves with the parsed event array
+ */
+const fetchEvents = (url) => {
+  // Bust the whole cache if the server-side version marker changed.
+  if (Number(LS.getItem(CACHE_TIME_KEY)) !== Number(lastUpdated)) {
+    clearEventCache();
+    try {
+      LS.setItem(CACHE_TIME_KEY, lastUpdated);
+    } catch (e) {
+      /* storage unavailable — fall through to a plain fetch */
+    }
+  }
+
+  const cacheKey = `${CACHE_PREFIX}${url}`;
+  const cached = LS.getItem(cacheKey);
+  if (cached) {
+    try {
+      return Promise.resolve(JSON.parse(cached));
+    } catch (e) {
+      LS.removeItem(cacheKey);
+    }
+  }
+
+  return fetch(url)
+    .then((response) => response.text())
+    .then((text) => {
+      const events = JSON.parse(text);
+      try {
+        LS.setItem(cacheKey, text);
+      } catch (e) {
+        /* quota exceeded / private mode — serve uncached, don't fail */
+      }
+      return events;
+    });
+};
+
 /**
  * Converts a hex color string to RGB object.
  *
@@ -297,10 +371,7 @@ document.addEventListener("DOMContentLoaded", function () {
         start: formatDate(start),
         end: formatDate(end),
       });
-      fetch(url)
-        .then((response) => response.json())
-        .then(successCallback)
-        .catch(failureCallback);
+      fetchEvents(url).then(successCallback).catch(failureCallback);
     },
 
     headerToolbar: {
@@ -481,6 +552,7 @@ document.addEventListener("DOMContentLoaded", function () {
           moveInfo.event.startStr.substring(0, 10),
         )
           .then(() => {
+            clearEventCache();
             calendar.refetchEvents();
           })
           .catch((error) => {
@@ -495,6 +567,7 @@ document.addEventListener("DOMContentLoaded", function () {
           moveInfo.event.startStr.substring(0, 10),
         )
           .then(() => {
+            clearEventCache();
             calendar.refetchEvents();
           })
           .catch((error) => {

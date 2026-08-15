@@ -27,6 +27,7 @@ const {
   page = "default",
   nameSpace = "WPFC",
   lastUpdated = 0,
+  monthVersions = {},
   canCreateEvents,
   canEditEvents,
   createEventNonce,
@@ -213,15 +214,23 @@ const dataToKVP = (data) =>
 const getAjaxUrl = (data) => `${ajaxurl}?${dataToKVP(data).join("&")}`;
 
 /* ==========================================================================
-   Event-feed Cache (localStorage read-through)
+   Event-feed Cache (localStorage read-through, month-scoped)
    ==========================================================================
-   Caches the event JSON per month range in localStorage so navigating the
-   calendar doesn't re-hit admin-ajax every time. The cache is busted two ways:
-     1. Cross-request: `lastUpdated` (the server's FC_CACHE option) is bumped
-        whenever any event is saved/cancelled; a changed value wipes the cache
-        on the next page load.
-     2. Same-session: after a front-end move/clone the cache is cleared
-        explicitly before refetch, because `lastUpdated` in memory is stale
+   Caches the event JSON per fetched range in localStorage so navigating the
+   calendar doesn't re-hit admin-ajax every time. Invalidation is month-scoped:
+
+     1. Per-month versions: the server (WPFC.monthVersions = { 'YYYY-MM': ts })
+        bumps only the month(s) an edited event touches. A cached range records
+        the max version of the months it overlaps at fetch time; on read it is
+        dropped only if one of those months now has a newer version — so editing
+        an August event doesn't evict September's cache.
+     2. Global bust: WPFC.lastUpdated (the FC_CACHE option) is bumped only for
+        changes we can't localise to a month (recurring events / bulk). A change
+        wipes the whole cache on the next load.
+     3. TTL backstop: entries older than MAX_AGE_MS are refetched regardless, so
+        any missed invalidation self-heals.
+     4. Same-session: after a front-end move/clone the affected month(s) are
+        cleared explicitly before refetch, since the in-memory versions are stale
         until the page reloads.
    The cache is per-browser, so per-user event visibility stays correct.
    ========================================================================== */
@@ -229,47 +238,114 @@ const getAjaxUrl = (data) => `${ajaxurl}?${dataToKVP(data).join("&")}`;
 /** @type {string} Prefix for cached event-feed entries (keyed by request URL). */
 const CACHE_PREFIX = `${nameSpace}/evt/`;
 
-/** @type {string} Key holding the lastUpdated value the cache was primed with. */
-const CACHE_TIME_KEY = `${nameSpace}/evt-time`;
+/** @type {string} Key holding the lastUpdated value the global cache was primed with. */
+const GLOBAL_KEY = `${nameSpace}/global`;
+
+/** @type {number} Max age of a cached entry before it is refetched (24h). */
+const MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 /**
- * Removes all cached event-feed entries. Leaves the view-preference key
- * (`${nameSpace}_DEFAULT_VIEW`) untouched — it doesn't share this prefix.
+ * Lists the 'YYYY-MM' months a [start, end) date range overlaps. FullCalendar's
+ * end is exclusive, so we walk up to (end - 1 day) to avoid pulling in a month
+ * that only the boundary day touches.
+ *
+ * @param {string} startISO - Range start, 'YYYY-MM-DD'
+ * @param {string} endISO - Range end (exclusive), 'YYYY-MM-DD'
+ * @returns {string[]} Month keys, e.g. ['2026-07', '2026-08']
  */
-const clearEventCache = () => {
+const monthsInRange = (startISO, endISO) => {
+  const months = [];
+  const cursor = new Date(`${startISO}T00:00:00`);
+  const last = new Date(`${endISO}T00:00:00`);
+  last.setDate(last.getDate() - 1);
+  cursor.setDate(1);
+  while (cursor <= last) {
+    const y = cursor.getFullYear();
+    const m = String(cursor.getMonth() + 1).padStart(2, "0");
+    months.push(`${y}-${m}`);
+    cursor.setMonth(cursor.getMonth() + 1);
+  }
+  return months;
+};
+
+/**
+ * The version stamp for a range: the newest per-month version among the months
+ * it overlaps (0 if none have ever been edited).
+ *
+ * @param {string} startISO
+ * @param {string} endISO
+ * @returns {number}
+ */
+const rangeVersion = (startISO, endISO) =>
+  monthsInRange(startISO, endISO).reduce(
+    (max, month) => Math.max(max, Number(monthVersions[month] || 0)),
+    0,
+  );
+
+/**
+ * Removes cached entries whose range overlaps any of the given months. With no
+ * argument, removes every cached entry.
+ *
+ * @param {Set<string>|null} months - Month keys to clear, or null for all
+ */
+const clearEventCache = (months = null) => {
   Object.keys(LS).forEach((key) => {
-    if (key.indexOf(CACHE_PREFIX) === 0) {
+    if (key.indexOf(CACHE_PREFIX) !== 0) {
+      return;
+    }
+    if (!months) {
+      LS.removeItem(key);
+      return;
+    }
+    try {
+      const entry = JSON.parse(LS.getItem(key));
+      const overlaps = monthsInRange(entry.s, entry.n).some((m) =>
+        months.has(m),
+      );
+      if (overlaps) {
+        LS.removeItem(key);
+      }
+    } catch (e) {
       LS.removeItem(key);
     }
   });
 };
 
 /**
- * Fetches the event feed for a URL, reading through localStorage. Returns
- * parsed events from cache when fresh, otherwise fetches and caches them.
+ * Fetches the event feed for a range, reading through localStorage. Returns
+ * parsed events from cache when still fresh, otherwise fetches and caches them.
  *
  * @param {string} url - The admin-ajax event-feed URL
+ * @param {string} startISO - Range start, 'YYYY-MM-DD'
+ * @param {string} endISO - Range end (exclusive), 'YYYY-MM-DD'
  * @returns {Promise<Object[]>} Resolves with the parsed event array
  */
-const fetchEvents = (url) => {
-  // Bust the whole cache if the server-side version marker changed.
-  if (Number(LS.getItem(CACHE_TIME_KEY)) !== Number(lastUpdated)) {
+const fetchEvents = (url, startISO, endISO) => {
+  // Global bust for changes we can't localise to a month (recurring / bulk).
+  if (String(LS.getItem(GLOBAL_KEY)) !== String(lastUpdated)) {
     clearEventCache();
     try {
-      LS.setItem(CACHE_TIME_KEY, lastUpdated);
+      LS.setItem(GLOBAL_KEY, lastUpdated);
     } catch (e) {
       /* storage unavailable — fall through to a plain fetch */
     }
   }
 
   const cacheKey = `${CACHE_PREFIX}${url}`;
+  const version = rangeVersion(startISO, endISO);
   const cached = LS.getItem(cacheKey);
   if (cached) {
     try {
-      return Promise.resolve(JSON.parse(cached));
+      const entry = JSON.parse(cached);
+      const fresh =
+        entry.v === version && Date.now() - (entry.t || 0) < MAX_AGE_MS;
+      if (fresh) {
+        return Promise.resolve(JSON.parse(entry.e));
+      }
     } catch (e) {
-      LS.removeItem(cacheKey);
+      /* corrupt entry — fall through to refetch */
     }
+    LS.removeItem(cacheKey);
   }
 
   return fetch(url)
@@ -277,12 +353,28 @@ const fetchEvents = (url) => {
     .then((text) => {
       const events = JSON.parse(text);
       try {
-        LS.setItem(cacheKey, text);
+        LS.setItem(
+          cacheKey,
+          JSON.stringify({ v: version, t: Date.now(), s: startISO, n: endISO, e: text }),
+        );
       } catch (e) {
         /* quota exceeded / private mode — serve uncached, don't fail */
       }
       return events;
     });
+};
+
+/**
+ * Clears the cache entries for the month(s) of the given event dates, so an
+ * in-session move/clone shows immediately without waiting for a reload.
+ *
+ * @param {...string} dateISOs - One or more 'YYYY-MM-DD' dates
+ */
+const clearEventCacheForDates = (...dateISOs) => {
+  const months = new Set(
+    dateISOs.filter(Boolean).map((d) => d.substring(0, 7)),
+  );
+  clearEventCache(months);
 };
 
 /**
@@ -365,13 +457,17 @@ document.addEventListener("DOMContentLoaded", function () {
      * Fetches events from WordPress via AJAX
      */
     events({ start, end }, successCallback, failureCallback) {
+      const startISO = formatDate(start);
+      const endISO = formatDate(end);
       const url = getAjaxUrl({
         action: data.action,
         type: data.type,
-        start: formatDate(start),
-        end: formatDate(end),
+        start: startISO,
+        end: endISO,
       });
-      fetchEvents(url).then(successCallback).catch(failureCallback);
+      fetchEvents(url, startISO, endISO)
+        .then(successCallback)
+        .catch(failureCallback);
     },
 
     headerToolbar: {
@@ -546,13 +642,19 @@ document.addEventListener("DOMContentLoaded", function () {
       const moveInfo = pendingMoveEvent;
       pendingMoveEvent = null;
 
+      // Capture the dates up-front, before any revert() can reset them.
+      const oldDate = moveInfo
+        ? moveInfo.oldEvent.startStr.substring(0, 10)
+        : null;
+      const newDate = moveInfo
+        ? moveInfo.event.startStr.substring(0, 10)
+        : null;
+
       if (moveDialog.returnValue === "move" && moveInfo) {
-        updateEventDate(
-          moveInfo.event.extendedProps.event_id,
-          moveInfo.event.startStr.substring(0, 10),
-        )
+        updateEventDate(moveInfo.event.extendedProps.event_id, newDate)
           .then(() => {
-            clearEventCache();
+            // A move affects both the source and destination months.
+            clearEventCacheForDates(oldDate, newDate);
             calendar.refetchEvents();
           })
           .catch((error) => {
@@ -562,12 +664,10 @@ document.addEventListener("DOMContentLoaded", function () {
       } else if (moveDialog.returnValue === "clone" && moveInfo) {
         // Revert the drag first (clone keeps original in place)
         moveInfo.revert();
-        cloneEvent(
-          moveInfo.event.extendedProps.event_id,
-          moveInfo.event.startStr.substring(0, 10),
-        )
+        cloneEvent(moveInfo.event.extendedProps.event_id, newDate)
           .then(() => {
-            clearEventCache();
+            // A clone only adds an event in the destination month.
+            clearEventCacheForDates(newDate);
             calendar.refetchEvents();
           })
           .catch((error) => {

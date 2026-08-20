@@ -52,13 +52,21 @@
 
 /* Straddle the anchor's top-right corner, offset by ~half the badge size so it
    reads as a corner badge rather than sitting inside the block. */
-.fc-daygrid-event.wpfc-booked::after {
+/* The extra .fc-event bump makes this win over FullCalendar's own
+   .fc-event-selected/.fc-event:focus::after overlay (inset:-1px), which shares
+   this element's single ::after. On tap/select — especially on mobile — that
+   overlay's left/bottom:-1px would otherwise re-anchor the badge to the
+   top-left, so we also reset left/bottom to auto here. */
+.fc-event.fc-daygrid-event.wpfc-booked::after {
   content: "";
   position: absolute;
   top: -6px;
   right: -6px;
+  left: auto;
+  bottom: auto;
   width: 12px;
   height: 12px;
+  z-index: 4;
   background: var(--wpfc-tick) no-repeat center / contain;
   pointer-events: none;
 }

@@ -611,13 +611,13 @@ document.addEventListener("DOMContentLoaded", function () {
      * Past events are shown with 50% opacity.
      */
     eventDidMount: (data) => {
+      // Flag events the current user has an accepted booking for so the css can
+      // render a green tick before the title (see .wpfc-booked in index.css).
+      // is_booked is set server-side on the feed; applies to list, month & week.
+      if (data.event.extendedProps?.is_booked) {
+        data.el.classList.add("wpfc-booked");
+      }
       if (data.view.type === "listMonth") {
-        // Flag rows the current user has an accepted booking for so the css
-        // can render a green tick before the title (see .fc-list-event.wpfc-booked
-        // in index.css). is_booked is set server-side on the event feed.
-        if (data.event.extendedProps?.is_booked) {
-          data.el.classList.add("wpfc-booked");
-        }
         return;
       }
       if (data.backgroundColor) {

@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: WP FullCalendar
-Version: 1.8.4
+Version: 1.8.5
 Text Domain: wp-fullcalendar
 Plugin URI: https://wordpress.org/extend/plugins/wp-fullcalendar/
 Description: Uses the jQuery FullCalendar plugin to create a stunning calendar view of events, posts and eventually other CPTs. Integrates well with Events Manager
@@ -23,7 +23,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-define('WPFC_VERSION', '1.8.4');
+define('WPFC_VERSION', '1.8.5');
 define('WPFC_UI_VERSION', '1.11');
 
 class WP_FullCalendar

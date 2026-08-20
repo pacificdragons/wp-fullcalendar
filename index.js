@@ -33,6 +33,10 @@ const {
   createEventNonce,
   updateEventNonce,
   cloneEventNonce,
+  // admin-ajax action returning the current user's accepted-booking event_ids.
+  // Fetched separately (per-user, uncached) so booking state never rides in the
+  // month-scoped event-feed cache. Empty string when nobody is logged in.
+  bookedEventsAction = "",
 } = window.WPFC;
 
 /** @type {Storage} Reference to localStorage for view preference persistence */
@@ -56,6 +60,45 @@ let pendingEventDate = null;
 
 /** @type {Object|null} FullCalendar event info pending move confirmation */
 let pendingMoveEvent = null;
+
+/* ==========================================================================
+   Booked-session marker (decoupled from the cached event feed)
+   ========================================================================== */
+
+/** @type {Set<number>|null} event_ids the current user is booked on; null until loaded. */
+let bookedEventIds = null;
+
+/** Adds the wpfc-booked class to an event element if the user is booked on it. */
+const markBookedEl = (el) => {
+  const id = el.dataset.wpfcId;
+  if (bookedEventIds && id && bookedEventIds.has(Number(id))) {
+    el.classList.add("wpfc-booked");
+  }
+};
+
+/** Re-applies booked classes to every mounted event under root (used once the
+ *  booking set resolves, for events that mounted before the fetch returned). */
+const applyBookedClasses = (root) => {
+  if (!bookedEventIds || !root) return;
+  root.querySelectorAll("[data-wpfc-id]").forEach(markBookedEl);
+};
+
+/** Fetches the current user's accepted-booking event_ids in a SEPARATE, uncached
+ *  request. Booking state is per-user and must not be baked into the shared,
+ *  month-scoped feed cache, so it is loaded here and applied client-side. */
+const loadBookedEventIds = (root) => {
+  if (!bookedEventsAction) return;
+  fetch(`${ajaxurl}?action=${encodeURIComponent(bookedEventsAction)}`, {
+    credentials: "same-origin",
+    cache: "no-store",
+  })
+    .then((r) => r.json())
+    .then((ids) => {
+      bookedEventIds = new Set((Array.isArray(ids) ? ids : []).map(Number));
+      applyBookedClasses(root);
+    })
+    .catch(() => {});
+};
 
 /* ==========================================================================
    Dialog Functions
@@ -611,11 +654,14 @@ document.addEventListener("DOMContentLoaded", function () {
      * Past events are shown with 50% opacity.
      */
     eventDidMount: (data) => {
-      // Flag events the current user has an accepted booking for so the css can
-      // render a green tick before the title (see .wpfc-booked in index.css).
-      // is_booked is set server-side on the feed; applies to list, month & week.
-      if (data.event.extendedProps?.is_booked) {
-        data.el.classList.add("wpfc-booked");
+      // Tag the element with its event_id and flag it if the user is booked on
+      // it (green tick / badge via .wpfc-booked in index.css). The booking set
+      // comes from a separate uncached request (see loadBookedEventIds), so if
+      // it hasn't resolved yet applyBookedClasses() marks this element later.
+      const eventId = data.event.extendedProps?.event_id;
+      if (eventId != null) {
+        data.el.dataset.wpfcId = eventId;
+        markBookedEl(data.el);
       }
       if (data.view.type === "listMonth") {
         return;
@@ -639,6 +685,10 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   calendar.render();
+
+  // Load the current user's bookings separately from the (cached) event feed
+  // and mark matching events; safe to run after render thanks to the sweep.
+  loadBookedEventIds(calendarEl);
 
   // Set up move dialog close handler (after calendar created so we can refetch)
   if (canEditEvents) {

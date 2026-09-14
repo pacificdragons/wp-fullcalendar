@@ -488,6 +488,28 @@ calendarEl.classList.add(`fc-${page.toLowerCase()}`);
 const now = new Date();
 const todaysDate = formatDate(now);
 
+/**
+ * On the full calendar page (page === "archive-event"), reads ?date=YYYY_MM
+ * from the URL so a link can open the calendar on a specific month
+ * (e.g. ?date=2026_12 opens December 2026). Returns a 'YYYY-MM-01' string, or
+ * null to fall back to the current month. Gated to archive-event so the
+ * single-event sidebar mini-calendar is never driven by the URL.
+ *
+ * @returns {string|null}
+ */
+const getUrlMonthDate = () => {
+  if (page !== "archive-event") return null;
+  const raw = new URLSearchParams(window.location.search).get("date");
+  const m = raw && raw.match(/^(\d{4})_(\d{2})$/);
+  if (!m) return null;
+  const month = Number(m[2]);
+  if (month < 1 || month > 12) return null;
+  return `${m[1]}-${m[2]}-01`;
+};
+
+/** @type {string|null} 'YYYY-MM-01' to open on, or null for the current month. */
+const urlMonthDate = getUrlMonthDate();
+
 document.addEventListener("DOMContentLoaded", function () {
   const calendarEl = document.getElementById("full-calendar");
 
@@ -512,6 +534,10 @@ document.addEventListener("DOMContentLoaded", function () {
    * FullCalendar instance configuration
    */
   const calendar = new Calendar(calendarEl, {
+    // Open on the month named by ?date=YYYY_MM when present (archive-event page
+    // only); omitted otherwise so FullCalendar defaults to the current month.
+    ...(urlMonthDate ? { initialDate: urlMonthDate } : {}),
+
     /**
      * Fetches events from WordPress via AJAX
      */
@@ -541,10 +567,22 @@ document.addEventListener("DOMContentLoaded", function () {
         : "listMonth",
 
     /**
-     * Saves the user's view preference to localStorage when changed.
+     * Saves the user's view preference to localStorage when changed, and — on
+     * the full calendar page — reflects the visible month back into the URL as
+     * ?date=YYYY_MM (via replaceState, no reload) so the current month stays
+     * shareable/bookmarkable. Gated to archive-event so the single-event
+     * sidebar calendar never rewrites the URL.
      */
     datesSet: (info) => {
       LS.setItem(`${nameSpace}_DEFAULT_VIEW`, info.view.type);
+      if (page !== "archive-event") return;
+      const d = info.view.currentStart;
+      const ym = `${d.getFullYear()}_${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("date") !== ym) {
+        url.searchParams.set("date", ym);
+        window.history.replaceState(window.history.state, "", url);
+      }
     },
     nowIndicator: true,
     firstDay: 1,

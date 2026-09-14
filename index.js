@@ -33,9 +33,10 @@ const {
   createEventNonce,
   updateEventNonce,
   cloneEventNonce,
-  // admin-ajax action returning the current user's accepted-booking event_ids.
-  // Fetched separately (per-user, uncached) so booking state never rides in the
-  // month-scoped event-feed cache. Empty string when nobody is logged in.
+  // admin-ajax action returning the current user's per-event booking state as
+  // { booked: number[], declined: number[] }. Fetched separately (per-user,
+  // uncached) so booking state never rides in the month-scoped event-feed
+  // cache. Empty string when nobody is logged in.
   bookedEventsAction = "",
 } = window.WPFC;
 
@@ -68,24 +69,36 @@ let pendingMoveEvent = null;
 /** @type {Set<number>|null} event_ids the current user is booked on; null until loaded. */
 let bookedEventIds = null;
 
-/** Adds the wpfc-booked class to an event element if the user is booked on it. */
+/** @type {Set<number>|null} event_ids the current user has declined (booked the
+ *  "Decline" ticket); null until loaded. */
+let declinedEventIds = null;
+
+/** Flags an event element with its booking marker: .wpfc-declined (red cross)
+ *  if the user declined the event, else .wpfc-booked (green tick) if booked.
+ *  Declined wins, so a declined event never also shows a tick. */
 const markBookedEl = (el) => {
   const id = el.dataset.wpfcId;
-  if (bookedEventIds && id && bookedEventIds.has(Number(id))) {
+  if (!id) return;
+  const n = Number(id);
+  if (declinedEventIds && declinedEventIds.has(n)) {
+    el.classList.add("wpfc-declined");
+  } else if (bookedEventIds && bookedEventIds.has(n)) {
     el.classList.add("wpfc-booked");
   }
 };
 
-/** Re-applies booked classes to every mounted event under root (used once the
- *  booking set resolves, for events that mounted before the fetch returned). */
+/** Re-applies booking markers to every mounted event under root (used once the
+ *  booking sets resolve, for events that mounted before the fetch returned). */
 const applyBookedClasses = (root) => {
-  if (!bookedEventIds || !root) return;
+  if ((!bookedEventIds && !declinedEventIds) || !root) return;
   root.querySelectorAll("[data-wpfc-id]").forEach(markBookedEl);
 };
 
-/** Fetches the current user's accepted-booking event_ids in a SEPARATE, uncached
+/** Fetches the current user's per-event booking state in a SEPARATE, uncached
  *  request. Booking state is per-user and must not be baked into the shared,
- *  month-scoped feed cache, so it is loaded here and applied client-side. */
+ *  month-scoped feed cache, so it is loaded here and applied client-side.
+ *  Response is { booked: number[], declined: number[] }; a bare array is
+ *  tolerated as legacy "booked only". */
 const loadBookedEventIds = (root) => {
   if (!bookedEventsAction) return;
   fetch(`${ajaxurl}?action=${encodeURIComponent(bookedEventsAction)}`, {
@@ -93,8 +106,11 @@ const loadBookedEventIds = (root) => {
     cache: "no-store",
   })
     .then((r) => r.json())
-    .then((ids) => {
-      bookedEventIds = new Set((Array.isArray(ids) ? ids : []).map(Number));
+    .then((res) => {
+      const booked = Array.isArray(res) ? res : res?.booked;
+      const declined = Array.isArray(res) ? [] : res?.declined;
+      bookedEventIds = new Set((Array.isArray(booked) ? booked : []).map(Number));
+      declinedEventIds = new Set((Array.isArray(declined) ? declined : []).map(Number));
       applyBookedClasses(root);
     })
     .catch(() => {});
@@ -654,10 +670,11 @@ document.addEventListener("DOMContentLoaded", function () {
      * Past events are shown with 50% opacity.
      */
     eventDidMount: (data) => {
-      // Tag the element with its event_id and flag it if the user is booked on
-      // it (green tick / badge via .wpfc-booked in index.css). The booking set
-      // comes from a separate uncached request (see loadBookedEventIds), so if
-      // it hasn't resolved yet applyBookedClasses() marks this element later.
+      // Tag the element with its event_id and flag the user's booking state on
+      // it (green tick via .wpfc-booked, red cross via .wpfc-declined, in
+      // index.css). The booking sets come from a separate uncached request (see
+      // loadBookedEventIds), so if they haven't resolved yet applyBookedClasses()
+      // marks this element later.
       const eventId = data.event.extendedProps?.event_id;
       if (eventId != null) {
         data.el.dataset.wpfcId = eventId;

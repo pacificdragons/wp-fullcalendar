@@ -555,6 +555,16 @@ document.addEventListener("DOMContentLoaded", function () {
         .catch(failureCallback);
     },
 
+    /**
+     * Toggles the loading overlay/spinner (see .fc--loading in index.css) while
+     * the event feed is in flight. A fresh localStorage cache hit resolves
+     * synchronously in fetchEvents, so this only appears on a real network
+     * fetch (cold or stale month).
+     */
+    loading: (isLoading) => {
+      calendarEl.classList.toggle("fc--loading", isLoading);
+    },
+
     headerToolbar: {
       center: "title",
       left: "dayGridMonth,timeGridWeek,listMonth",

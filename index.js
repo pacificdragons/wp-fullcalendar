@@ -530,6 +530,18 @@ document.addEventListener("DOMContentLoaded", function () {
     createMoveDialog();
   }
 
+  // On phones the long toolbar title ("October 2026") crowds the nav buttons,
+  // so shorten it to "Oct '26". Breakpoint matches the theme's mobile cut-off
+  // (webpack/main.scss: max-width 575px). FullCalendar 6 passes a function
+  // titleFormat an ExpandedZonedMarker with .year and 0-indexed .month.
+  const mobileTitleQuery = window.matchMedia("(max-width: 575px)");
+  const SHORT_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const LONG_MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const monthTitle = (arg) =>
+    mobileTitleQuery.matches
+      ? `${SHORT_MONTHS[arg.date.month]} '${String(arg.date.year).slice(-2)}`
+      : `${LONG_MONTHS[arg.date.month]} ${arg.date.year}`;
+
   /**
    * FullCalendar instance configuration
    */
@@ -565,16 +577,33 @@ document.addEventListener("DOMContentLoaded", function () {
       calendarEl.classList.toggle("fc--loading", isLoading);
     },
 
+    // "EOI" shortcut → jumps to the Expression of Interest event-category list.
+    customButtons: {
+      eoi: {
+        text: "EOI",
+        click: () => {
+          window.location.href = "/events/categories/eoi/";
+        },
+      },
+    },
+
     headerToolbar: {
       center: "title",
-      left: "dayGridMonth,timeGridWeek,listMonth",
+      left: "dayGridMonth,listMonth eoi",
       right: "prev,next",
     },
 
-    initialView:
-      LS.getItem(`${nameSpace}_DEFAULT_VIEW`) !== null
-        ? LS.getItem(`${nameSpace}_DEFAULT_VIEW`)
-        : "listMonth",
+    // Responsive toolbar title: "October 2026" on desktop, "Oct '26" on phones.
+    titleFormat: monthTitle,
+
+    // Only month/list views remain in the toolbar, so a value persisted from
+    // the removed week view (or any other stale/unknown type) must fall back to
+    // listMonth — otherwise a returning user would land on a view with no
+    // button to leave it. See datesSet below, which writes this key.
+    initialView: (() => {
+      const saved = LS.getItem(`${nameSpace}_DEFAULT_VIEW`);
+      return ["dayGridMonth", "listMonth"].includes(saved) ? saved : "listMonth";
+    })(),
 
     /**
      * Saves the user's view preference to localStorage when changed, and — on
@@ -750,6 +779,13 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   calendar.render();
+
+  // titleFormat is only evaluated at render time, so re-apply it (a fresh
+  // function ref forces the toolbar title to recompute) when the viewport
+  // crosses the mobile breakpoint — e.g. a phone rotating to landscape.
+  mobileTitleQuery.addEventListener("change", () => {
+    calendar.setOption("titleFormat", (arg) => monthTitle(arg));
+  });
 
   // Load the current user's bookings separately from the (cached) event feed
   // and mark matching events; safe to run after render thanks to the sweep.

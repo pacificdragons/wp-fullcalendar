@@ -126,3 +126,20 @@
   background: var(--wpfc-marker) no-repeat center / contain;
   pointer-events: none;
 }
+
+/* "EOI" toolbar shortcut — colour comes from the Expression of Interest event
+   category itself: the theme injects --pds-eoi-color (from the category's
+   category-bgcolor meta) on the events page, so the button always matches the
+   legend badge. The hex is only a fallback if that var is absent. !important
+   guards against FullCalendar's runtime-injected button styles, which can load
+   after this stylesheet and otherwise win at equal specificity. */
+.fc .fc-eoi-button.fc-button {
+  background-color: var(--pds-eoi-color, #d800ff) !important;
+  border-color: var(--pds-eoi-color, #d800ff) !important;
+  color: #fff !important;
+}
+.fc .fc-eoi-button.fc-button:hover,
+.fc .fc-eoi-button.fc-button:active,
+.fc .fc-eoi-button.fc-button:focus {
+  filter: brightness(0.88);
+}

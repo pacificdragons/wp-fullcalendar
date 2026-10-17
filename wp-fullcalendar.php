@@ -23,7 +23,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 */
 
-define('WPFC_VERSION', '1.8.9');
+define('WPFC_VERSION', '1.8.10');
 define('WPFC_UI_VERSION', '1.11');
 
 class WP_FullCalendar

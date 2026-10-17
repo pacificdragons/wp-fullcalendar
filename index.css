@@ -126,3 +126,21 @@
   background: var(--wpfc-marker) no-repeat center / contain;
   pointer-events: none;
 }
+
+/* "EOI" toolbar shortcut — brand magenta for the Expression of Interest list.
+   !important guards against FullCalendar's runtime-injected button styles,
+   which can load after this stylesheet and otherwise win at equal specificity. */
+.fc .fc-eoi-button.fc-button {
+  background-color: #D801FF !important;
+  border-color: #D801FF !important;
+  color: #fff !important;
+}
+.fc .fc-eoi-button.fc-button:hover,
+.fc .fc-eoi-button.fc-button:active,
+.fc .fc-eoi-button.fc-button:focus {
+  background-color: #B400D6 !important;
+  border-color: #B400D6 !important;
+}
+.fc .fc-eoi-button.fc-button:focus {
+  box-shadow: 0 0 0 0.2rem rgba(216, 1, 255, 0.4) !important;
+}

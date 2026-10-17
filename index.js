@@ -577,9 +577,19 @@ document.addEventListener("DOMContentLoaded", function () {
       calendarEl.classList.toggle("fc--loading", isLoading);
     },
 
+    // "EOI" shortcut → jumps to the Expression of Interest event-category list.
+    customButtons: {
+      eoi: {
+        text: "EOI",
+        click: () => {
+          window.location.href = "/events/categories/eoi/";
+        },
+      },
+    },
+
     headerToolbar: {
       center: "title",
-      left: "dayGridMonth,listMonth",
+      left: "dayGridMonth,listMonth eoi",
       right: "prev,next",
     },
 

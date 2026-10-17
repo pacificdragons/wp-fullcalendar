@@ -567,14 +567,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
     headerToolbar: {
       center: "title",
-      left: "dayGridMonth,timeGridWeek,listMonth",
+      left: "dayGridMonth,listMonth",
       right: "prev,next",
     },
 
-    initialView:
-      LS.getItem(`${nameSpace}_DEFAULT_VIEW`) !== null
-        ? LS.getItem(`${nameSpace}_DEFAULT_VIEW`)
-        : "listMonth",
+    // Only month/list views remain in the toolbar, so a value persisted from
+    // the removed week view (or any other stale/unknown type) must fall back to
+    // listMonth — otherwise a returning user would land on a view with no
+    // button to leave it. See datesSet below, which writes this key.
+    initialView: (() => {
+      const saved = LS.getItem(`${nameSpace}_DEFAULT_VIEW`);
+      return ["dayGridMonth", "listMonth"].includes(saved) ? saved : "listMonth";
+    })(),
 
     /**
      * Saves the user's view preference to localStorage when changed, and — on
